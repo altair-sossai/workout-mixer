@@ -1,14 +1,270 @@
-﻿<Window x:Class="WorkoutMixer.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:WorkoutMixer"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Canvas x:Name="GraficoCanvas"
-            Background="White"
-            ToolTipService.InitialShowDelay="0"
-            ToolTipService.ShowDuration="60000"
-            ToolTipService.BetweenShowDelay="0"/>
-</Window>
+<mah:MetroWindow x:Class="WorkoutMixer.MainWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:behaviors="clr-namespace:WorkoutMixer.Behaviors"
+                 xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+                 xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+                 xmlns:components="clr-namespace:WorkoutMixer.Components"
+                 Title="Workout Mixer" WindowStartupLocation="CenterScreen" WindowState="Maximized">
+    <Grid Background="#FFF3F5F7">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="2*" />
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0"
+                Margin="8"
+                Padding="10"
+                Background="White"
+                CornerRadius="10">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <StackPanel>
+                    <TextBlock FontSize="22"
+                               FontWeight="SemiBold"
+                               Text="MP3 Files" />
+                    <TextBlock x:Name="FileSummaryTextBlock"
+                               Margin="0,2,0,8"
+                               Foreground="#FF5E6875"
+                               Text="No files selected." />
+                    <StackPanel Orientation="Horizontal">
+                        <Button Width="120"
+                                Height="28"
+                                Margin="0,0,6,0"
+                                HorizontalAlignment="Left"
+                                Click="AddFiles_Click"
+                                Content="Add files" />
+                        <Button Width="120"
+                                Height="28"
+                                Margin="0,0,6,0"
+                                Click="SaveFinalMix_Click"
+                                Content="Save MP3" />
+                        <Button Width="120"
+                                Height="28"
+                                Click="SaveIntensityReport_Click"
+                                Content="Save intensities" />
+                    </StackPanel>
+                </StackPanel>
+
+                <TextBlock Grid.Row="1"
+                           Margin="0,8,0,4"
+                           FontSize="13"
+                           FontWeight="SemiBold"
+                           Text="Current list" />
+
+                <ListBox x:Name="FilesListBox"
+                         Grid.Row="2"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         ScrollViewer.CanContentScroll="False"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         behaviors:SmoothScrollBehavior.IsEnabled="True"
+                         SelectionMode="Single">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Margin" Value="0,0,0,6" />
+                            <Setter Property="Padding" Value="0" />
+                            <Setter Property="BorderThickness" Value="0" />
+                            <Setter Property="Background" Value="Transparent" />
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <ContentPresenter />
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <components:Mp3FileListItem File="{Binding}"
+                                                        MoveDownCommand="{Binding MoveDownCommand, RelativeSource={RelativeSource AncestorType=mah:MetroWindow}}"
+                                                        MoveUpCommand="{Binding MoveUpCommand, RelativeSource={RelativeSource AncestorType=mah:MetroWindow}}"
+                                                        RemoveCommand="{Binding RemoveCommand, RelativeSource={RelativeSource AncestorType=mah:MetroWindow}}" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Column="1" Margin="0,8,8,8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1.1*" />
+                <RowDefinition Height="0.9*" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0"
+                    Padding="8"
+                    Background="White"
+                    CornerRadius="10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <DockPanel Margin="0,0,0,4">
+                        <StackPanel DockPanel.Dock="Right"
+                                    Orientation="Horizontal">
+                            <Button Width="28"
+                                    Height="24"
+                                    Margin="0,0,4,0"
+                                    Click="ZoomOutChart_Click"
+                                    ToolTip="Zoom out">
+                                <iconPacks:PackIconModern Width="12"
+                                                          Height="12"
+                                                          Kind="Minus" />
+                            </Button>
+                            <Button Width="52"
+                                    Height="24"
+                                    Margin="0,0,4,0"
+                                    Click="ResetChartZoom_Click"
+                                    ToolTip="Reset zoom">
+                                <TextBlock x:Name="ChartZoomTextBlock"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Text="1x" />
+                            </Button>
+                            <Button Width="28"
+                                    Height="24"
+                                    Click="ZoomInChart_Click"
+                                    ToolTip="Zoom in">
+                                <iconPacks:PackIconModern Width="12"
+                                                          Height="12"
+                                                          Kind="Add" />
+                            </Button>
+                        </StackPanel>
+                        <TextBlock FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Text="Workout chart" />
+                        <TextBlock Margin="10,3,0,0"
+                                   Foreground="#FF5E6875"
+                                   Text="Segments and music list redraw this view automatically." />
+                    </DockPanel>
+
+                    <ScrollViewer Grid.Row="1"
+                                  VerticalScrollBarVisibility="Disabled"
+                                  HorizontalScrollBarVisibility="Auto"
+                                  CanContentScroll="True">
+                        <Canvas x:Name="ChartCanvas"
+                                Background="White"
+                                Width="1200"
+                                ToolTipService.BetweenShowDelay="0"
+                                ToolTipService.InitialShowDelay="0"
+                                ToolTipService.ShowDuration="60000" />
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="1"
+                    Margin="0,8,0,0"
+                    Padding="8"
+                    Background="White"
+                    CornerRadius="10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <DockPanel Margin="0,0,0,6">
+                        <StackPanel DockPanel.Dock="Left">
+                            <TextBlock FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Text="Chart segments" />
+                            <TextBlock Foreground="#FF5E6875"
+                                       Text="Edit duration and zone, then reorder as needed." />
+                        </StackPanel>
+
+                        <Button Width="96"
+                                Height="28"
+                                HorizontalAlignment="Right"
+                                Command="{Binding AddChartDataPointCommand}"
+                                Content="Add segment"
+                                DockPanel.Dock="Right" />
+                    </DockPanel>
+
+                    <DataGrid x:Name="ChartDataPointsGrid"
+                              Grid.Row="1"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              CanUserDeleteRows="False"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal"
+                              IsReadOnly="False"
+                              RowHeaderWidth="0"
+                              SelectionMode="Single">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Width="*"
+                                                    Header="Zone">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock VerticalAlignment="Center"
+                                                   Text="{Binding Zone.Name}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <ComboBox
+                                            ItemsSource="{Binding DataContext.AvailableZones, RelativeSource={RelativeSource AncestorType=mah:MetroWindow}}"
+                                            SelectedItem="{Binding Zone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                            DisplayMemberPath="Name" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding DurationSeconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=0.##}"
+                                                Header="Seconds" />
+                            <DataGridTemplateColumn Width="118"
+                                                    Header="Actions">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Width="28"
+                                                    Height="24"
+                                                    Margin="0,0,3,0"
+                                                    Command="{Binding DataContext.MoveChartDataPointUpCommand, RelativeSource={RelativeSource AncestorType=mah:MetroWindow}}"
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip="Move up">
+                                                <iconPacks:PackIconModern Width="12"
+                                                                          Height="12"
+                                                                          Kind="ArrowUp" />
+                                            </Button>
+                                            <Button Width="28"
+                                                    Height="24"
+                                                    Margin="0,0,3,0"
+                                                    Command="{Binding DataContext.MoveChartDataPointDownCommand, RelativeSource={RelativeSource AncestorType=mah:MetroWindow}}"
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip="Move down">
+                                                <iconPacks:PackIconModern Width="12"
+                                                                          Height="12"
+                                                                          Kind="ArrowDown" />
+                                            </Button>
+                                            <Button Width="28"
+                                                    Height="24"
+                                                    Command="{Binding DataContext.RemoveChartDataPointCommand, RelativeSource={RelativeSource AncestorType=mah:MetroWindow}}"
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip="Remove segment">
+                                                <iconPacks:PackIconModern Width="12"
+                                                                          Height="12"
+                                                                          Kind="Delete" />
+                                            </Button>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</mah:MetroWindow>
