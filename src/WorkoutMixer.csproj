@@ -1,0 +1,45 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net10.0-windows</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UseWPF>true</UseWPF>
+        <ApplicationIcon>favicon.ico</ApplicationIcon>
+        <AppVersion>1.0.0</AppVersion>
+        <InformationalVersion>$(AppVersion)</InformationalVersion>
+        <AssemblyVersion>$(AppVersion)</AssemblyVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MahApps.Metro" Version="2.4.11" />
+        <PackageReference Include="MahApps.Metro.IconPacks.Modern" Version="6.2.1" />
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.3" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.3" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.3" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.3" />
+        <PackageReference Include="NAudio" Version="2.3.0" />
+        <PackageReference Include="NAudio.Lame" Version="2.1.0" />
+        <PackageReference Include="Scrutor" Version="7.0.0" />
+        <PackageReference Include="Serilog" Version="4.3.1" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+        <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Remove="favicon.png" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Resource Include="favicon.png" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="appsettings.json">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+</Project>
