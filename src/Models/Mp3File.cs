@@ -53,10 +53,7 @@ public sealed class Mp3File : INotifyPropertyChanged
     {
         var file = Create(path);
 
-        if (preloadWaveform)
-        {
-            _ = file.Waveform;
-        }
+        if (preloadWaveform) _ = file.Waveform;
 
         return file;
     }

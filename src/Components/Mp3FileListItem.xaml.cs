@@ -1,22 +1,15 @@
 using System.Windows;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 using NAudio.Wave;
+using WorkoutMixer.Components.EventArgs;
 using WorkoutMixer.Models;
-using ShapePath = System.Windows.Shapes.Path;
 
 namespace WorkoutMixer.Components;
 
 public partial class Mp3FileListItem
 {
-    private const double BottomMargin = 10;
-    private const double LeftMargin = 8;
-    private const double RightMargin = 8;
-    private const double TopMargin = 8;
-
     private static Mp3FileListItem? _activePlayer;
 
     public static readonly DependencyProperty FileProperty = DependencyProperty.Register(nameof(File), typeof(Mp3File), typeof(Mp3FileListItem), new PropertyMetadata(null, OnFileChanged));
@@ -29,14 +22,10 @@ public partial class Mp3FileListItem
         Interval = TimeSpan.FromMilliseconds(200)
     };
 
-    private readonly List<double> _waveformValues = [];
-
     private AudioFileReader? _audioReader;
     private bool _isSeeking;
     private bool _isUpdatingSlider;
     private WaveOutEvent? _waveOut;
-
-    public static event EventHandler<PlaybackProgressChangedEventArgs>? PlaybackProgressChanged;
 
     public Mp3FileListItem()
     {
@@ -72,18 +61,18 @@ public partial class Mp3FileListItem
         set => SetValue(RemoveCommandProperty, value);
     }
 
+    public static event EventHandler<PlaybackProgressChangedEventArgs>? PlaybackProgressChanged;
+
     private static void OnFileChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs _)
     {
         var control = (Mp3FileListItem)dependencyObject;
 
         control.ResetPlayback();
-        control.LoadWaveform();
         control.UpdatePlaybackUi();
     }
 
     private void Mp3FileListItem_Loaded(object sender, RoutedEventArgs e)
     {
-        LoadWaveform();
         UpdatePlaybackUi();
     }
 
@@ -140,7 +129,7 @@ public partial class Mp3FileListItem
 
     private void SeekSlider_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
-        if (_isSeeking) 
+        if (_isSeeking)
             return;
 
         SeekToSliderValue();
@@ -150,12 +139,12 @@ public partial class Mp3FileListItem
 
     private void SeekSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
-        if (_isUpdatingSlider) 
+        if (_isUpdatingSlider)
             return;
 
         if (_isSeeking)
         {
-            CurrentTimeTextBlock.Text = Mp3File.FormatDuration(TimeSpan.FromSeconds(SeekSlider.Value));
+            UpdateCurrentTimeText(TimeSpan.FromSeconds(SeekSlider.Value));
             return;
         }
 
@@ -167,7 +156,7 @@ public partial class Mp3FileListItem
         }
     }
 
-    private void PlaybackTimer_Tick(object? sender, EventArgs e)
+    private void PlaybackTimer_Tick(object? sender, System.EventArgs e)
     {
         if (_audioReader is null || _isSeeking)
             return;
@@ -175,14 +164,8 @@ public partial class Mp3FileListItem
         _isUpdatingSlider = true;
         SeekSlider.Value = Math.Min(SeekSlider.Maximum, _audioReader.CurrentTime.TotalSeconds);
         _isUpdatingSlider = false;
-        CurrentTimeTextBlock.Text = Mp3File.FormatDuration(_audioReader.CurrentTime);
+        UpdateCurrentTimeText(_audioReader.CurrentTime);
         PublishPlaybackProgress(true);
-    }
-
-    private void WaveformCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        if (e.NewSize is { Width: > 0, Height: > 0 })
-            DrawWaveform();
     }
 
     private void EnsurePlayer()
@@ -249,12 +232,10 @@ public partial class Mp3FileListItem
             PlayButton.IsEnabled = false;
             PauseButton.IsEnabled = false;
             SeekSlider.Maximum = 1;
-            DurationTextBlock.Text = "00:00";
-            CurrentTimeTextBlock.Text = "00:00";
+            CurrentTimeTextBlock.Text = "00:00 / 00:00";
             return;
         }
 
-        DurationTextBlock.Text = File.DurationFormatted;
         SeekSlider.Maximum = Math.Max(1, File.Duration.TotalSeconds);
 
         if (!_isSeeking)
@@ -263,7 +244,7 @@ public partial class Mp3FileListItem
             _isUpdatingSlider = true;
             SeekSlider.Value = Math.Min(SeekSlider.Maximum, currentTime.TotalSeconds);
             _isUpdatingSlider = false;
-            CurrentTimeTextBlock.Text = Mp3File.FormatDuration(currentTime);
+            UpdateCurrentTimeText(currentTime);
         }
 
         var playbackState = _waveOut?.PlaybackState ?? PlaybackState.Stopped;
@@ -274,11 +255,17 @@ public partial class Mp3FileListItem
 
     private void SeekToSliderValue()
     {
-        if (_audioReader is null) 
+        if (_audioReader is null)
             return;
 
         _audioReader.CurrentTime = TimeSpan.FromSeconds(SeekSlider.Value);
-        CurrentTimeTextBlock.Text = Mp3File.FormatDuration(_audioReader.CurrentTime);
+        UpdateCurrentTimeText(_audioReader.CurrentTime);
+    }
+
+    private void UpdateCurrentTimeText(TimeSpan currentTime)
+    {
+        var durationText = File?.DurationFormatted ?? "00:00";
+        CurrentTimeTextBlock.Text = $"{Mp3File.FormatDuration(currentTime)} / {durationText}";
     }
 
     private void PublishPlaybackProgress(bool isPlaying)
@@ -293,122 +280,4 @@ public partial class Mp3FileListItem
                 _audioReader?.CurrentTime ?? TimeSpan.Zero,
                 isPlaying));
     }
-
-    private void LoadWaveform()
-    {
-        _waveformValues.Clear();
-
-        if (File is null)
-        {
-            DrawWaveform();
-            return;
-        }
-
-        _waveformValues.AddRange(File.Waveform);
-
-        DrawWaveform();
-    }
-
-    private void DrawWaveform()
-    {
-        if (WaveformCanvas.ActualWidth <= 0 || WaveformCanvas.ActualHeight <= 0)
-            return;
-
-        WaveformCanvas.Children.Clear();
-
-        var width = WaveformCanvas.ActualWidth;
-        var height = WaveformCanvas.ActualHeight;
-        var usableWidth = width - LeftMargin - RightMargin;
-        var usableHeight = height - TopMargin - BottomMargin;
-
-        if (usableWidth <= 0 || usableHeight <= 0)
-            return;
-
-        foreach (var guide in new[] { 0.0, 0.5, 1.0 })
-        {
-            var y = TopMargin + usableHeight - guide * usableHeight;
-
-            WaveformCanvas.Children.Add(new Line
-            {
-                X1 = LeftMargin,
-                Y1 = y,
-                X2 = width - RightMargin,
-                Y2 = y,
-                Stroke = new SolidColorBrush(Color.FromRgb(224, 232, 241)),
-                StrokeThickness = guide == 0 ? 1.4 : 1
-            });
-        }
-
-        if (_waveformValues.Count == 0)
-            return;
-
-        var points = new List<Point>(_waveformValues.Count);
-
-        for (var i = 0; i < _waveformValues.Count; i++)
-        {
-            var value = _waveformValues[i];
-            var x = _waveformValues.Count == 1
-                ? LeftMargin + usableWidth / 2
-                : LeftMargin + i / (double)(_waveformValues.Count - 1) * usableWidth;
-            var y = TopMargin + usableHeight - value * usableHeight;
-            points.Add(new Point(x, y));
-        }
-
-        var areaFigure = new PathFigure
-        {
-            StartPoint = new Point(LeftMargin, height - BottomMargin)
-        };
-
-        foreach (var point in points)
-            areaFigure.Segments.Add(new LineSegment(point, true));
-
-        areaFigure.Segments.Add(new LineSegment(new Point(width - RightMargin, height - BottomMargin), true));
-
-        var areaPath = new ShapePath
-        {
-            Fill = new SolidColorBrush(Color.FromArgb(55, 31, 111, 235)),
-            Data = new PathGeometry([areaFigure])
-        };
-
-        WaveformCanvas.Children.Add(areaPath);
-
-        var lineGeometry = new PathGeometry();
-        var lineFigure = new PathFigure { StartPoint = points[0] };
-        const double smoothing = 0.18;
-
-        for (var i = 0; i < points.Count - 1; i++)
-        {
-            var p0 = i > 0 ? points[i - 1] : points[i];
-            var p1 = points[i];
-            var p2 = points[i + 1];
-            var p3 = i < points.Count - 2 ? points[i + 2] : p2;
-
-            var controlPoint1 = new Point(
-                p1.X + (p2.X - p0.X) * smoothing,
-                p1.Y + (p2.Y - p0.Y) * smoothing);
-
-            var controlPoint2 = new Point(
-                p2.X - (p3.X - p1.X) * smoothing,
-                p2.Y - (p3.Y - p1.Y) * smoothing);
-
-            lineFigure.Segments.Add(new BezierSegment(controlPoint1, controlPoint2, p2, true));
-        }
-
-        lineGeometry.Figures.Add(lineFigure);
-
-        WaveformCanvas.Children.Add(new ShapePath
-        {
-            Data = lineGeometry,
-            Stroke = new SolidColorBrush(Color.FromRgb(31, 111, 235)),
-            StrokeThickness = 2,
-            Opacity = 0.95
-        });
-    }
-}
-
-public sealed class PlaybackProgressChangedEventArgs(Mp3File file, TimeSpan position, bool isPlaying) : EventArgs
-{
-    public Mp3File File { get; } = file;
-    public TimeSpan Position { get; } = position;
-    public bool IsPlaying { get; } = isPlaying;
 }

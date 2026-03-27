@@ -4,34 +4,29 @@ using System.Windows.Media;
 
 namespace WorkoutMixer.Models;
 
-internal sealed class ChartDataPoint : INotifyPropertyChanged
+public sealed class ChartDataPoint(double duration, ChartZone zone, int rpm = ChartDataPoint.DefaultRpmValue)
+    : INotifyPropertyChanged
 {
-    private double _duration;
-    private ChartZone _zone;
-
-    public ChartDataPoint(double duration, ChartZone zone)
-    {
-        _duration = Math.Max(0.1, duration);
-        _zone = zone;
-    }
+    private const int DefaultRpmValue = 65;
 
     public double Duration
     {
-        get => _duration;
+        get;
         set
         {
             var normalizedValue = Math.Max(0.01, value);
 
-            if (Math.Abs(_duration - normalizedValue) < 0.001)
+            if (Math.Abs(field - normalizedValue) < 0.001)
                 return;
 
-            _duration = normalizedValue;
+            field = normalizedValue;
             OnPropertyChanged();
             OnPropertyChanged(nameof(DurationSeconds));
+            OnPropertyChanged(nameof(DurationMinutes));
             OnPropertyChanged(nameof(Intensity));
             OnPropertyChanged(nameof(Brush));
         }
-    }
+    } = Math.Max(0.1, duration);
 
     public double DurationSeconds
     {
@@ -39,20 +34,41 @@ internal sealed class ChartDataPoint : INotifyPropertyChanged
         set => Duration = value / 60;
     }
 
+    public double DurationMinutes
+    {
+        get => Duration;
+        set => Duration = value;
+    }
+
     public ChartZone Zone
     {
-        get => _zone;
+        get;
         set
         {
-            if (_zone == value)
+            if (field == value)
                 return;
 
-            _zone = value;
+            field = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(Intensity));
             OnPropertyChanged(nameof(Brush));
         }
-    }
+    } = zone;
+
+    public int Rpm
+    {
+        get;
+        set
+        {
+            var normalizedValue = Math.Max(1, value);
+
+            if (field == normalizedValue)
+                return;
+
+            field = normalizedValue;
+            OnPropertyChanged();
+        }
+    } = Math.Max(1, rpm);
 
     public double Intensity => Zone.MaxValue;
     public Brush Brush => Zone.Brush;

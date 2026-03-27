@@ -3,177 +3,143 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              x:Name="Root">
-    <Border Padding="4" Background="#FFF8FAFD" BorderBrush="#FFDDE5EE" BorderThickness="1" CornerRadius="7">
+    <Border Padding="3" Background="#FFF8FAFD" BorderBrush="#FFDDE5EE" BorderThickness="1" CornerRadius="7">
         <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="84" />
-            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="160" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
 
-            <Grid Grid.Row="0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <Border Width="34"
-                        Height="34"
-                        Background="#FFE8F1FC"
-                        CornerRadius="10">
-                    <iconPacks:PackIconModern Width="14"
-                                              Height="14"
-                                              HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"
-                                              Foreground="#FF1F5FAE"
-                                              Kind="Music" />
-                </Border>
-
-                <StackPanel Grid.Column="1"
-                            Margin="8,0,6,0"
-                            VerticalAlignment="Center">
-                    <DockPanel LastChildFill="True">
-                        <Border Padding="5,2"
-                                Background="#FF1F6FEB"
-                                CornerRadius="7"
-                                DockPanel.Dock="Left">
-                            <TextBlock FontSize="10"
-                                       FontWeight="Bold"
-                                       Foreground="White"
-                                       Text="{Binding File.Position, ElementName=Root, StringFormat={}#{0}}" />
-                        </Border>
-
-                        <TextBlock Margin="6,0,0,0"
-                                   VerticalAlignment="Center"
-                                   FontSize="13"
-                                   FontWeight="SemiBold"
-                                   Text="{Binding File.FileName, ElementName=Root}"
-                                   TextTrimming="CharacterEllipsis"
-                                   ToolTip="{Binding File.Path, ElementName=Root}" />
-                    </DockPanel>
-
-                    <StackPanel Margin="0,4,0,0"
-                                Orientation="Horizontal">
-                        <Border Margin="0,0,4,0"
-                                Padding="6,2"
-                                Background="#FFEFF4FA"
-                                CornerRadius="7">
-                            <TextBlock FontSize="10"
-                                       Foreground="#FF4B5968"
-                                       Text="{Binding File.DurationFormatted, ElementName=Root}" />
-                        </Border>
-
-                        <Border Padding="6,2"
-                                Background="#FFEFF4FA"
-                                CornerRadius="7">
-                            <TextBlock FontSize="10"
-                                       Foreground="#FF4B5968"
-                                       Text="{Binding File.SizeFormatted, ElementName=Root}" />
-                        </Border>
-                    </StackPanel>
-                </StackPanel>
-
-                <StackPanel Grid.Column="2"
-                            Margin="0,0,6,0"
-                            Orientation="Horizontal"
-                            VerticalAlignment="Center">
-                    <Button x:Name="PlayButton"
-                            Width="28"
-                            Height="24"
-                            Click="PlayButton_Click"
-                            ToolTip="Play">
-                        <iconPacks:PackIconModern Width="13"
-                                                  Height="13"
-                                                  Kind="ControlPlay" />
-                    </Button>
-
-                    <Button x:Name="PauseButton"
-                            Width="28"
-                            Height="24"
-                            Margin="3,0,0,0"
-                            Click="PauseButton_Click"
-                            ToolTip="Pause">
-                        <iconPacks:PackIconModern Width="13"
-                                                  Height="13"
-                                                  Kind="ControlPause" />
-                    </Button>
-
-                    <StackPanel Margin="6,0,0,0"
-                                VerticalAlignment="Center">
-                        <TextBlock x:Name="CurrentTimeTextBlock"
-                                   FontSize="10"
-                                   FontWeight="SemiBold"
-                                   Foreground="#FF314152"
-                                   Text="00:00" />
-                        <TextBlock x:Name="DurationTextBlock"
-                                   FontSize="10"
-                                   Foreground="#FF556273"
-                                   Text="{Binding File.DurationFormatted, ElementName=Root}" />
-                    </StackPanel>
-                </StackPanel>
-
-                <StackPanel Grid.Column="3"
-                            Orientation="Horizontal"
-                            VerticalAlignment="Center">
-                    <Button Width="28"
-                            Height="24"
-                            Margin="0,0,2,0"
-                            Command="{Binding MoveUpCommand, ElementName=Root}"
-                            CommandParameter="{Binding File, ElementName=Root}"
-                            ToolTip="Move up">
-                        <iconPacks:PackIconModern Width="12"
-                                                  Height="12"
-                                                  Kind="ArrowUp" />
-                    </Button>
-                    <Button Width="28"
-                            Height="24"
-                            Margin="0,0,2,0"
-                            Command="{Binding MoveDownCommand, ElementName=Root}"
-                            CommandParameter="{Binding File, ElementName=Root}"
-                            ToolTip="Move down">
-                        <iconPacks:PackIconModern Width="12"
-                                                  Height="12"
-                                                  Kind="ArrowDown" />
-                    </Button>
-                    <Button Width="28"
-                            Height="24"
-                            Command="{Binding RemoveCommand, ElementName=Root}"
-                            CommandParameter="{Binding File, ElementName=Root}"
-                            ToolTip="Remove file">
-                        <iconPacks:PackIconModern Width="12"
-                                                  Height="12"
-                                                  Kind="Delete" />
-                    </Button>
-                </StackPanel>
-            </Grid>
-
-            <Border Grid.Row="1"
-                    Margin="0,4,0,0"
-                    Padding="1"
-                    Background="White"
-                    BorderBrush="#FFE3EAF3"
-                    BorderThickness="1"
-                    CornerRadius="10">
-                <Grid>
-                    <Canvas x:Name="WaveformCanvas"
-                            Background="Transparent"
-                            SizeChanged="WaveformCanvas_SizeChanged" />
-
-                    <Slider x:Name="SeekSlider"
-                            Margin="4,0,4,4"
-                            VerticalAlignment="Bottom"
-                            Background="Transparent"
-                            IsMoveToPointEnabled="True"
-                            Maximum="1"
-                            Minimum="0"
-                            Opacity="0.96"
-                            PreviewMouseLeftButtonUp="SeekSlider_PreviewMouseLeftButtonUp"
-                            Thumb.DragCompleted="SeekSlider_DragCompleted"
-                            Thumb.DragStarted="SeekSlider_DragStarted"
-                            ValueChanged="SeekSlider_ValueChanged" />
-                </Grid>
+            <Border Width="24"
+                    Height="24"
+                    Margin="0,0,6,0"
+                    Background="#FFE8F1FC"
+                    CornerRadius="8">
+                <iconPacks:PackIconModern Width="12"
+                                          Height="12"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Foreground="#FF1F5FAE"
+                                          Kind="Music" />
             </Border>
+
+            <DockPanel Grid.Column="1"
+                       Margin="0,0,8,0"
+                       VerticalAlignment="Center"
+                       LastChildFill="True">
+                <Border Padding="4,1"
+                        Background="#FF1F6FEB"
+                        CornerRadius="6"
+                        DockPanel.Dock="Left">
+                    <TextBlock FontSize="9"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               Text="{Binding File.Position, ElementName=Root, StringFormat={}#{0}}" />
+                </Border>
+                <TextBlock Margin="6,0,8,0"
+                           VerticalAlignment="Center"
+                           FontSize="12"
+                           FontWeight="SemiBold"
+                           Text="{Binding File.FileName, ElementName=Root}"
+                           TextTrimming="CharacterEllipsis"
+                           ToolTip="{Binding File.Path, ElementName=Root}" />
+                <TextBlock VerticalAlignment="Center"
+                           FontSize="10"
+                           Foreground="#FF556273"
+                           Text="{Binding File.DurationFormatted, ElementName=Root}" />
+                <TextBlock Margin="8,0,0,0"
+                           VerticalAlignment="Center"
+                           FontSize="10"
+                           Foreground="#FF556273"
+                           Text="{Binding File.SizeFormatted, ElementName=Root}" />
+            </DockPanel>
+
+            <TextBlock x:Name="CurrentTimeTextBlock"
+                       Grid.Column="2"
+                       Margin="0,0,8,0"
+                       VerticalAlignment="Center"
+                       FontSize="10"
+                       FontWeight="SemiBold"
+                       Foreground="#FF314152"
+                       Text="00:00 /" />
+
+            <Slider x:Name="SeekSlider"
+                    Grid.Column="3"
+                    Margin="0,0,8,0"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    IsMoveToPointEnabled="True"
+                    Maximum="1"
+                    Minimum="0"
+                    Opacity="0.96"
+                    PreviewMouseLeftButtonUp="SeekSlider_PreviewMouseLeftButtonUp"
+                    Thumb.DragCompleted="SeekSlider_DragCompleted"
+                    Thumb.DragStarted="SeekSlider_DragStarted"
+                    ValueChanged="SeekSlider_ValueChanged" />
+
+            <StackPanel Grid.Column="4"
+                        Margin="0,0,8,0"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center">
+                <Button x:Name="PlayButton"
+                        Width="24"
+                        Height="22"
+                        Click="PlayButton_Click"
+                        ToolTip="Play">
+                    <iconPacks:PackIconModern Width="12"
+                                              Height="12"
+                                              Kind="ControlPlay" />
+                </Button>
+
+                <Button x:Name="PauseButton"
+                        Width="24"
+                        Height="22"
+                        Margin="2,0,0,0"
+                        Click="PauseButton_Click"
+                        ToolTip="Pause">
+                    <iconPacks:PackIconModern Width="12"
+                                              Height="12"
+                                              Kind="ControlPause" />
+                </Button>
+            </StackPanel>
+
+            <StackPanel Grid.Column="5"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center">
+                <Button Width="24"
+                        Height="22"
+                        Margin="0,0,2,0"
+                        Command="{Binding MoveUpCommand, ElementName=Root}"
+                        CommandParameter="{Binding File, ElementName=Root}"
+                        ToolTip="Move up">
+                    <iconPacks:PackIconModern Width="11"
+                                              Height="11"
+                                              Kind="ArrowUp" />
+                </Button>
+                <Button Width="24"
+                        Height="22"
+                        Margin="0,0,2,0"
+                        Command="{Binding MoveDownCommand, ElementName=Root}"
+                        CommandParameter="{Binding File, ElementName=Root}"
+                        ToolTip="Move down">
+                    <iconPacks:PackIconModern Width="11"
+                                              Height="11"
+                                              Kind="ArrowDown" />
+                </Button>
+                <Button Width="24"
+                        Height="22"
+                        Command="{Binding RemoveCommand, ElementName=Root}"
+                        CommandParameter="{Binding File, ElementName=Root}"
+                        ToolTip="Remove file">
+                    <iconPacks:PackIconModern Width="11"
+                                              Height="11"
+                                              Kind="Delete" />
+                </Button>
+            </StackPanel>
         </Grid>
     </Border>
 </UserControl>
