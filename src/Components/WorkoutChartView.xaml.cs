@@ -433,10 +433,12 @@ public partial class WorkoutChartView
             var fallbackPoints = BuildWaveformPoints([], totalMinutes, usableWidth, usableHeight, chartData);
 
             if (fallbackPoints.Count > 1)
+            {
                 AddWaveformPath(
                     fallbackPoints,
                     GetThemeBrush("MahApps.Brushes.SystemControlForegroundBaseMedium", Color.FromRgb(88, 88, 88)),
                     false);
+            }
 
             return;
         }

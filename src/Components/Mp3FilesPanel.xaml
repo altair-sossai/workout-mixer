@@ -4,6 +4,7 @@
              xmlns:behaviors="clr-namespace:WorkoutMixer.Behaviors"
              xmlns:components="clr-namespace:WorkoutMixer.Components"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
              x:Name="Root">
     <Border Margin="0,0,4,0"
             Padding="12"
@@ -25,9 +26,11 @@
                            Text="{Binding SummaryText, ElementName=Root}" />
                 <StackPanel Orientation="Horizontal">
                     <Button Width="108"
-                            Height="26"
+                            Height="30"
                             Margin="0,0,4,0"
                             HorizontalAlignment="Left"
+                            Style="{DynamicResource MahApps.Styles.Button.Dialogs.Accent}"
+                            mah:ControlsHelper.CornerRadius="0"
                             Command="{Binding AddFilesCommand, ElementName=Root}">
                         <StackPanel Orientation="Horizontal">
                             <iconPacks:PackIconModern Width="11"
@@ -40,8 +43,10 @@
                         </StackPanel>
                     </Button>
                     <Button Width="108"
-                            Height="26"
+                            Height="30"
                             Margin="0,0,4,0"
+                            Style="{DynamicResource MahApps.Styles.Button.Dialogs.Accent}"
+                            mah:ControlsHelper.CornerRadius="0"
                             Command="{Binding SaveFinalMixCommand, ElementName=Root}">
                         <StackPanel Orientation="Horizontal">
                             <iconPacks:PackIconModern Width="11"
@@ -54,7 +59,9 @@
                         </StackPanel>
                     </Button>
                     <Button Width="118"
-                            Height="26"
+                            Height="30"
+                            Style="{DynamicResource MahApps.Styles.Button.Dialogs.Accent}"
+                            mah:ControlsHelper.CornerRadius="0"
                             Command="{Binding SaveIntensityReportCommand, ElementName=Root}">
                         <StackPanel Orientation="Horizontal">
                             <iconPacks:PackIconModern Width="11"

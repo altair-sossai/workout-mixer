@@ -1,7 +1,8 @@
 <UserControl x:Class="WorkoutMixer.Components.WorkoutChartView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls">
     <Border Margin="0,0,0,4"
             Padding="12"
             Background="{DynamicResource MahApps.Brushes.ThemeBackground}"
@@ -17,8 +18,9 @@
                 <StackPanel DockPanel.Dock="Right"
                             Orientation="Horizontal">
                     <Button Width="28"
-                            Height="22"
+                            Height="24"
                             Margin="0,0,3,0"
+                            mah:ControlsHelper.CornerRadius="0"
                             Click="ZoomOutChart_Click"
                             ToolTip="Zoom out">
                         <iconPacks:PackIconModern Width="12"
@@ -26,8 +28,9 @@
                                                   Kind="Minus" />
                     </Button>
                     <Button Width="52"
-                            Height="22"
+                            Height="24"
                             Margin="0,0,3,0"
+                            mah:ControlsHelper.CornerRadius="0"
                             Click="ResetChartZoom_Click"
                             ToolTip="Reset zoom">
                         <StackPanel Orientation="Horizontal"
@@ -45,7 +48,8 @@
                         </StackPanel>
                     </Button>
                     <Button Width="28"
-                            Height="22"
+                            Height="24"
+                            mah:ControlsHelper.CornerRadius="0"
                             Click="ZoomInChart_Click"
                             ToolTip="Zoom in">
                         <iconPacks:PackIconModern Width="12"

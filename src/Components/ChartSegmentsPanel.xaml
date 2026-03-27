@@ -29,8 +29,10 @@
                 </StackPanel>
 
                 <Button Width="108"
-                        Height="26"
+                        Height="30"
                         HorizontalAlignment="Right"
+                        Style="{DynamicResource MahApps.Styles.Button.Dialogs.Accent}"
+                        mah:ControlsHelper.CornerRadius="0"
                         Command="{Binding AddChartDataPointCommand, ElementName=Root}"
                         DockPanel.Dock="Right">
                     <StackPanel Orientation="Horizontal">
@@ -164,6 +166,7 @@
                                     <Button Width="24"
                                             Height="22"
                                             Margin="0,0,2,0"
+                                            mah:ControlsHelper.CornerRadius="0"
                                             Command="{Binding MoveChartDataPointUpCommand, ElementName=Root}"
                                             CommandParameter="{Binding}"
                                             ToolTip="Move up">
@@ -174,6 +177,7 @@
                                     <Button Width="24"
                                             Height="22"
                                             Margin="0,0,2,0"
+                                            mah:ControlsHelper.CornerRadius="0"
                                             Command="{Binding MoveChartDataPointDownCommand, ElementName=Root}"
                                             CommandParameter="{Binding}"
                                             ToolTip="Move down">
@@ -183,6 +187,7 @@
                                     </Button>
                                     <Button Width="24"
                                             Height="22"
+                                            mah:ControlsHelper.CornerRadius="0"
                                             Command="{Binding RemoveChartDataPointCommand, ElementName=Root}"
                                             CommandParameter="{Binding}"
                                             ToolTip="Remove segment">
