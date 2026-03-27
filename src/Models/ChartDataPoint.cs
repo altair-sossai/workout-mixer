@@ -4,11 +4,9 @@ using System.Windows.Media;
 
 namespace WorkoutMixer.Models;
 
-public sealed class ChartDataPoint(double duration, ChartZone zone, int rpm = ChartDataPoint.DefaultRpmValue)
+public sealed class ChartDataPoint(double duration, ChartZone zone, int rpm)
     : INotifyPropertyChanged
 {
-    private const int DefaultRpmValue = 65;
-
     public double Duration
     {
         get;

@@ -13,6 +13,7 @@ public partial class App
     private static readonly Type Type = typeof(App);
     private static readonly Assembly Assembly = Type.Assembly;
     private readonly IHost _host;
+    public static IServiceProvider Services => ((App)Current)._host.Services;
 
     public App()
     {

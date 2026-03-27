@@ -2,7 +2,10 @@ using System.Windows;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Threading;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using NAudio.Wave;
+using WorkoutMixer.Configuration;
 using WorkoutMixer.Components.EventArgs;
 using WorkoutMixer.Models;
 
@@ -10,7 +13,6 @@ namespace WorkoutMixer.Components;
 
 public partial class Mp3FileListItem
 {
-    private const double PreviewOverlapSeconds = 5;
     private static readonly HashSet<Mp3FileListItem> LoadedItems = [];
 
     public static readonly DependencyProperty FileProperty = DependencyProperty.Register(nameof(File), typeof(Mp3File), typeof(Mp3FileListItem), new PropertyMetadata(null, OnFileChanged));
@@ -28,9 +30,11 @@ public partial class Mp3FileListItem
     private bool _isUpdatingSlider;
     private Mp3FileListItem? _nextCrossfadeItem;
     private WaveOutEvent? _waveOut;
+    private readonly AudioOptions _audioOptions;
 
     public Mp3FileListItem()
     {
+        _audioOptions = App.Services.GetRequiredService<IOptions<AudioOptions>>().Value;
         InitializeComponent();
 
         Loaded += Mp3FileListItem_Loaded;
@@ -392,7 +396,7 @@ public partial class Mp3FileListItem
         if (remaining <= TimeSpan.Zero)
             return;
 
-        var overlap = TimeSpan.FromSeconds(Math.Min(PreviewOverlapSeconds, File.Duration.TotalSeconds));
+        var overlap = TimeSpan.FromSeconds(Math.Min(_audioOptions.TrackOverlapSeconds, File.Duration.TotalSeconds));
 
         if (remaining > overlap)
         {
@@ -436,6 +440,7 @@ public partial class Mp3FileListItem
     {
         var segments = new List<(Mp3File File, double StartSeconds, double EndSeconds)>(files.Count);
         double startSeconds = 0;
+        var trackOverlapSeconds = GetTrackOverlapSeconds();
 
         for (var index = 0; index < files.Count; index++)
         {
@@ -446,10 +451,15 @@ public partial class Mp3FileListItem
             startSeconds += durationSeconds;
 
             if (index < files.Count - 1)
-                startSeconds -= Math.Min(PreviewOverlapSeconds, Math.Min(file.Waveform.Count, files[index + 1].Waveform.Count));
+                startSeconds -= Math.Min(trackOverlapSeconds, Math.Min(file.Waveform.Count, files[index + 1].Waveform.Count));
         }
 
         return segments;
+    }
+
+    private static int GetTrackOverlapSeconds()
+    {
+        return App.Services.GetRequiredService<IOptions<AudioOptions>>().Value.TrackOverlapSeconds;
     }
 
     private static Mp3FileListItem? GetLoadedItem(Mp3File file)

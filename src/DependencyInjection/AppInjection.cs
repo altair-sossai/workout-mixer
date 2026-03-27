@@ -15,6 +15,7 @@ public static class AppInjection
             .AsImplementedInterfaces(type => assemblies.Contains(type.Assembly)));
 
         serviceCollection.AddChartOptions(configuration);
+        serviceCollection.AddAppOptions(configuration);
 
         serviceCollection.AddSingleton<MainWindow>();
     }

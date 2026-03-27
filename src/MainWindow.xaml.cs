@@ -19,10 +19,21 @@ namespace WorkoutMixer;
 
 public partial class MainWindow
 {
-    private const int TrackOverlapSeconds = 5;
+    private readonly AudioOptions _audioOptions;
+    private readonly ExportOptions _exportOptions;
+    private readonly WorkoutDefaultsOptions _workoutDefaultsOptions;
+    private readonly LAMEPreset _mp3Preset;
 
-    public MainWindow(IOptions<ChartOptions> chartOptions)
+    public MainWindow(
+        IOptions<ChartOptions> chartOptions,
+        IOptions<AudioOptions> audioOptions,
+        IOptions<ExportOptions> exportOptions,
+        IOptions<WorkoutDefaultsOptions> workoutDefaultsOptions)
     {
+        _audioOptions = audioOptions.Value;
+        _exportOptions = exportOptions.Value;
+        _workoutDefaultsOptions = workoutDefaultsOptions.Value;
+        _mp3Preset = Enum.Parse<LAMEPreset>(_audioOptions.Mp3Preset, true);
         AvailableZones = chartOptions.Value.ToChartZones();
 
         if (AvailableZones.Count == 0)
@@ -143,7 +154,7 @@ public partial class MainWindow
             Filter = "MP3 file (*.mp3)|*.mp3",
             DefaultExt = ".mp3",
             AddExtension = true,
-            FileName = "workout-mix.mp3",
+            FileName = _exportOptions.FinalMixDefaultFileName,
             Title = "Choose where to save the final MP3"
         };
 
@@ -190,7 +201,7 @@ public partial class MainWindow
             Filter = "Text file (*.txt)|*.txt",
             DefaultExt = ".txt",
             AddExtension = true,
-            FileName = "workout-intensities.txt",
+            FileName = _exportOptions.IntensityReportDefaultFileName,
             Title = "Choose where to save the intensity report"
         };
 
@@ -270,7 +281,7 @@ public partial class MainWindow
     {
         var readers = new List<AudioFileReader>();
         var providers = new List<ISampleProvider>();
-        var targetFormat = WaveFormat.CreateIeeeFloatWaveFormat(44100, 2);
+        var targetFormat = WaveFormat.CreateIeeeFloatWaveFormat(_audioOptions.TargetSampleRate, _audioOptions.TargetChannels);
         double startOffsetSeconds = 0;
         double totalOutputSeconds = 0;
 
@@ -318,7 +329,7 @@ public partial class MainWindow
 
             progress?.Report((0, "Preparing final mix..."));
 
-            using var writer = new LameMP3FileWriter(outputPath, waveProvider.WaveFormat, LAMEPreset.VBR_90);
+            using var writer = new LameMP3FileWriter(outputPath, waveProvider.WaveFormat, _mp3Preset);
 
             int bytesRead;
 
@@ -370,7 +381,7 @@ public partial class MainWindow
 
     private void AddChartDataPoint()
     {
-        var point = new ChartDataPoint(5, AvailableZones[0]);
+        var point = new ChartDataPoint(_workoutDefaultsOptions.SegmentDurationMinutes, AvailableZones[0], _workoutDefaultsOptions.SegmentRpm);
         ChartData.Add(point);
         SegmentsPanel.SelectChartDataPoint(point);
     }
@@ -428,9 +439,9 @@ public partial class MainWindow
         FilesPanel.SelectFile(item);
     }
 
-    private static int GetOverlapSeconds(Mp3File first, Mp3File second)
+    private int GetOverlapSeconds(Mp3File first, Mp3File second)
     {
-        return Math.Min(TrackOverlapSeconds, Math.Min(first.Waveform.Count, second.Waveform.Count));
+        return Math.Min(_audioOptions.TrackOverlapSeconds, Math.Min(first.Waveform.Count, second.Waveform.Count));
     }
 
     private sealed class CrossfadeSampleProvider : ISampleProvider

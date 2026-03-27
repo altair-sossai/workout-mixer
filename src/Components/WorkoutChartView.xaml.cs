@@ -5,6 +5,9 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using WorkoutMixer.Configuration;
 using WorkoutMixer.Components.EventArgs;
 using WorkoutMixer.Models;
 using ShapePath = System.Windows.Shapes.Path;
@@ -18,10 +21,6 @@ public partial class WorkoutChartView
     private const double LeftMargin = 34;
     private const double TopMargin = 12;
     private const double BaseChartWidth = 1200;
-    private const int TrackOverlapSeconds = 5;
-    private const int FinalChartSampleSeconds = 2;
-    private const int WaveformPointReductionFactor = 3;
-    private const int WaveformSmoothingRadius = 2;
 
     public static readonly DependencyProperty ChartDataPointsProperty = DependencyProperty.Register(
         nameof(ChartDataPoints),
@@ -44,9 +43,13 @@ public partial class WorkoutChartView
     private INotifyCollectionChanged? _filesCollection;
     private Mp3File? _playingFile;
     private TimeSpan _playingPosition;
+    private readonly AudioOptions _audioOptions;
+    private readonly WaveformOptions _waveformOptions;
 
     public WorkoutChartView()
     {
+        _audioOptions = App.Services.GetRequiredService<IOptions<AudioOptions>>().Value;
+        _waveformOptions = App.Services.GetRequiredService<IOptions<WaveformOptions>>().Value;
         InitializeComponent();
 
         Loaded += WorkoutChartView_Loaded;
@@ -548,7 +551,7 @@ public partial class WorkoutChartView
                 continue;
             }
 
-            var overlap = Math.Min(TrackOverlapSeconds, Math.Min(combined.Count, waveform.Count));
+            var overlap = Math.Min(_audioOptions.TrackOverlapSeconds, Math.Min(combined.Count, waveform.Count));
             var overlapStart = combined.Count - overlap;
 
             for (var i = 0; i < overlap; i++)
@@ -598,9 +601,9 @@ public partial class WorkoutChartView
     {
         if (combinedWaveform.Count > 0)
         {
-            var reducedWaveform = ReduceWaveformResolution(combinedWaveform, FinalChartSampleSeconds);
-            var smoothedWaveform = SmoothWaveform(reducedWaveform, WaveformSmoothingRadius);
-            var targetPointCount = Math.Max(2, (int)Math.Ceiling(usableWidth / WaveformPointReductionFactor));
+            var reducedWaveform = ReduceWaveformResolution(combinedWaveform, _waveformOptions.FinalChartSampleSeconds);
+            var smoothedWaveform = SmoothWaveform(reducedWaveform, _waveformOptions.SmoothingRadius);
+            var targetPointCount = Math.Max(2, (int)Math.Ceiling(usableWidth / _waveformOptions.PointReductionFactor));
             var bucketSize = Math.Max(1, smoothedWaveform.Count / (double)targetPointCount);
             var points = new List<Point>(targetPointCount);
 
@@ -622,7 +625,7 @@ public partial class WorkoutChartView
 
                 var amplitude = amplitudeSum / (end - start);
                 var sampleCenter = start + (end - start) / 2d;
-                var timeInMinutes = sampleCenter * FinalChartSampleSeconds / 60d;
+                var timeInMinutes = sampleCenter * _waveformOptions.FinalChartSampleSeconds / 60d;
                 var x = LeftMargin + timeInMinutes / totalMinutes * usableWidth;
                 var y = TopMargin + usableHeight - amplitude * usableHeight;
                 points.Add(new Point(x, y));
@@ -657,10 +660,10 @@ public partial class WorkoutChartView
         if (waveform.Count == 0)
             return [];
 
-        var reducedWaveform = ReduceWaveformResolution(waveform, FinalChartSampleSeconds);
-        var smoothedWaveform = SmoothWaveform(reducedWaveform, WaveformSmoothingRadius);
+        var reducedWaveform = ReduceWaveformResolution(waveform, _waveformOptions.FinalChartSampleSeconds);
+        var smoothedWaveform = SmoothWaveform(reducedWaveform, _waveformOptions.SmoothingRadius);
         var widthInPixels = Math.Max(16, (segment.EndSeconds - segment.StartSeconds) / 60d / totalMinutes * usableWidth);
-        var targetPointCount = Math.Max(2, (int)Math.Ceiling(widthInPixels / WaveformPointReductionFactor));
+        var targetPointCount = Math.Max(2, (int)Math.Ceiling(widthInPixels / _waveformOptions.PointReductionFactor));
         var bucketSize = Math.Max(1, smoothedWaveform.Count / (double)targetPointCount);
         var points = new List<Point>(targetPointCount);
 
@@ -682,7 +685,7 @@ public partial class WorkoutChartView
 
             var amplitude = amplitudeSum / (end - start);
             var sampleCenter = start + (end - start) / 2d;
-            var timeInMinutes = (segment.StartSeconds + sampleCenter * FinalChartSampleSeconds) / 60d;
+            var timeInMinutes = (segment.StartSeconds + sampleCenter * _waveformOptions.FinalChartSampleSeconds) / 60d;
             var x = LeftMargin + timeInMinutes / totalMinutes * usableWidth;
             var y = TopMargin + usableHeight - amplitude * usableHeight;
             points.Add(new Point(x, y));
@@ -836,9 +839,9 @@ public partial class WorkoutChartView
         return -1;
     }
 
-    private static int GetOverlapSeconds(Mp3File first, Mp3File second)
+    private int GetOverlapSeconds(Mp3File first, Mp3File second)
     {
-        return Math.Min(TrackOverlapSeconds, Math.Min(first.Waveform.Count, second.Waveform.Count));
+        return Math.Min(_audioOptions.TrackOverlapSeconds, Math.Min(first.Waveform.Count, second.Waveform.Count));
     }
 
     private IReadOnlyList<ChartDataPoint> GetChartDataPoints()
