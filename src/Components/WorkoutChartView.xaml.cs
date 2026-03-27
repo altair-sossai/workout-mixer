@@ -313,13 +313,15 @@ public partial class WorkoutChartView
             var zoneWidth = dataPoint.Duration / totalMinutes * usableWidth;
             var y = TopMargin + usableHeight - dataPoint.Intensity * usableHeight;
             var zoneHeight = dataPoint.Intensity * usableHeight;
+            var fillBrush = CreateLighterBrush(dataPoint.Brush);
 
             var rectangle = new Rectangle
             {
                 Width = zoneWidth,
                 Height = zoneHeight,
-                Fill = dataPoint.Brush,
-                Opacity = 0.58,
+                Fill = fillBrush,
+                Stroke = dataPoint.Brush,
+                StrokeThickness = 0.9,
                 ToolTip = $"{dataPoint.Zone.Name}\nDuration: {dataPoint.Duration:0.##} min\nIntensity: {dataPoint.Intensity:0.00}"
             };
 
@@ -332,6 +334,7 @@ public partial class WorkoutChartView
 
         DrawTrackRanges(fileTimeline, totalMinutes, usableWidth, usableHeight);
         DrawWaveformSegments(fileTimeline, totalMinutes, usableWidth, usableHeight, chartData);
+        DrawBottomScaleTicks(totalMinutes, usableWidth, height - BottomMargin);
 
         foreach (var minute in GenerateTimeScale(totalMinutes))
         {
@@ -340,6 +343,28 @@ public partial class WorkoutChartView
         }
 
         DrawPlaybackMarker(totalMinutes, height, usableWidth);
+    }
+
+    private static Brush CreateLighterBrush(Brush baseBrush)
+    {
+        if (baseBrush is not SolidColorBrush solidColorBrush)
+            return baseBrush.CloneCurrentValue();
+
+        var baseColor = solidColorBrush.Color;
+        var lighterColor = Color.FromArgb(
+            0xB0,
+            BlendWithWhite(baseColor.R, 0.72),
+            BlendWithWhite(baseColor.G, 0.72),
+            BlendWithWhite(baseColor.B, 0.72));
+
+        var lighterBrush = new SolidColorBrush(lighterColor);
+        lighterBrush.Freeze();
+        return lighterBrush;
+    }
+
+    private static byte BlendWithWhite(byte component, double amount)
+    {
+        return (byte)Math.Clamp(component + (255 - component) * amount, 0, 255);
     }
 
     private void DrawTrackRanges(
@@ -463,6 +488,35 @@ public partial class WorkoutChartView
         });
     }
 
+    private void DrawBottomScaleTicks(double totalMinutes, double usableWidth, double axisY)
+    {
+        var majorStep = GetTimeScaleStep(totalMinutes);
+        var minorStep = GetMinorTimeScaleStep(majorStep, totalMinutes, usableWidth);
+
+        if (minorStep <= 0)
+            return;
+
+        var tickBrush = new SolidColorBrush(Color.FromRgb(90, 98, 110));
+        tickBrush.Freeze();
+
+        for (var minute = 0d; minute <= totalMinutes + 0.0001; minute += minorStep)
+        {
+            var isMajorTick = IsMultipleOfStep(minute, majorStep);
+            var x = LeftMargin + Math.Min(minute, totalMinutes) / totalMinutes * usableWidth;
+
+            ChartCanvas.Children.Add(new Line
+            {
+                X1 = x,
+                Y1 = axisY,
+                X2 = x,
+                Y2 = axisY + (isMajorTick ? 8 : 4),
+                Stroke = tickBrush,
+                StrokeThickness = isMajorTick ? 1.1 : 0.8,
+                SnapsToDevicePixels = true
+            });
+        }
+    }
+
     private void AddText(string text, double x, double y, HorizontalAlignment alignment)
     {
         var textBlock = new TextBlock
@@ -493,6 +547,24 @@ public partial class WorkoutChartView
         return values;
     }
 
+    private double GetMinorTimeScaleStep(double majorStep, double totalMinutes, double usableWidth)
+    {
+        foreach (var divisor in new[] { 5d, 4d, 2d })
+        {
+            var candidate = majorStep / divisor;
+
+            if (candidate <= 0)
+                continue;
+
+            var pixelsPerTick = candidate / totalMinutes * usableWidth;
+
+            if (pixelsPerTick >= 14)
+                return candidate;
+        }
+
+        return majorStep;
+    }
+
     private double GetTimeScaleStep(double totalMinutes)
     {
         if (_chartZoom >= 4.5)
@@ -511,6 +583,15 @@ public partial class WorkoutChartView
             return 5;
 
         return 10;
+    }
+
+    private static bool IsMultipleOfStep(double value, double step)
+    {
+        if (step <= 0)
+            return false;
+
+        var nearestMultiple = Math.Round(value / step);
+        return Math.Abs(value - nearestMultiple * step) < 0.001;
     }
 
     private static string FormatTimeScaleLabel(double minute)
