@@ -2,12 +2,24 @@ using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
 using NAudio.Wave;
+using System.Windows.Media;
 
 namespace WorkoutMixer.Models;
 
 public sealed class Mp3File : INotifyPropertyChanged
 {
     private static readonly string[] Suffixes = ["B", "KB", "MB", "GB"];
+    private static readonly Color[] AccentPalette =
+    [
+        Color.FromRgb(0xD9, 0x4E, 0x41),
+        Color.FromRgb(0x1D, 0x78, 0xB5),
+        Color.FromRgb(0x20, 0x8D, 0x6A),
+        Color.FromRgb(0xB5, 0x6A, 0x12),
+        Color.FromRgb(0x8A, 0x49, 0xB8),
+        Color.FromRgb(0xC2, 0x3B, 0x74),
+        Color.FromRgb(0x2E, 0x8B, 0x57),
+        Color.FromRgb(0xC0, 0x57, 0x2F)
+    ];
     private readonly Lazy<IReadOnlyList<double>> _waveform;
 
     private Mp3File(string path, TimeSpan duration, long sizeBytes)
@@ -16,6 +28,8 @@ public sealed class Mp3File : INotifyPropertyChanged
         FileName = System.IO.Path.GetFileName(path);
         Duration = duration;
         SizeBytes = sizeBytes;
+        AccentColor = PickAccentColor(path);
+        AccentBrush = CreateFrozenBrush(AccentColor);
         _waveform = new Lazy<IReadOnlyList<double>>(() => CreateWaveform(Path));
     }
 
@@ -25,6 +39,8 @@ public sealed class Mp3File : INotifyPropertyChanged
     public string DurationFormatted => FormatDuration(Duration);
     public long SizeBytes { get; }
     public string SizeFormatted => FormatSize(SizeBytes);
+    public Color AccentColor { get; }
+    public Brush AccentBrush { get; }
     public IReadOnlyList<double> Waveform => _waveform.Value;
 
     public int Position
@@ -138,6 +154,19 @@ public sealed class Mp3File : INotifyPropertyChanged
         }
 
         return $"{value:0.##} {Suffixes[suffixIndex]}";
+    }
+
+    private static Color PickAccentColor(string path)
+    {
+        var index = Math.Abs(StringComparer.OrdinalIgnoreCase.GetHashCode(path)) % AccentPalette.Length;
+        return AccentPalette[index];
+    }
+
+    private static SolidColorBrush CreateFrozenBrush(Color color)
+    {
+        var brush = new SolidColorBrush(color);
+        brush.Freeze();
+        return brush;
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)

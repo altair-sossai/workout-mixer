@@ -12,6 +12,8 @@ namespace WorkoutMixer.Components;
 
 public partial class WorkoutChartView
 {
+    private sealed record FileTimelineSegment(Mp3File File, double StartSeconds, double EndSeconds);
+
     private const double BottomMargin = 32;
     private const double RightMargin = 18;
     private const double LeftMargin = 34;
@@ -35,6 +37,7 @@ public partial class WorkoutChartView
         new PropertyMetadata(null, OnFilesChanged));
 
     private INotifyCollectionChanged? _chartDataCollection;
+    private readonly Dictionary<Mp3File, TimeSpan> _activePlaybackPositions = [];
 
     private double _chartZoom = 1;
     private List<double>? _combinedWaveformCache;
@@ -98,6 +101,27 @@ public partial class WorkoutChartView
     {
         if (e.NewSize is { Width: > 0, Height: > 0 })
             DrawChart();
+    }
+
+    private void ChartCanvas_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (ChartCanvas.ActualWidth <= 0 || ChartCanvas.ActualHeight <= 0)
+            return;
+
+        var usableWidth = ChartCanvas.ActualWidth - LeftMargin - RightMargin;
+
+        if (usableWidth <= 0)
+            return;
+
+        var x = Math.Clamp(e.GetPosition(ChartCanvas).X, LeftMargin, ChartCanvas.ActualWidth - RightMargin);
+        var chartData = GetChartDataPoints();
+        var chartDurationMinutes = Math.Max(1, chartData.Sum(point => point.Duration));
+        var waveformDurationMinutes = Math.Max(0, BuildCombinedWaveform().Count / 60d);
+        var totalMinutes = Math.Max(chartDurationMinutes, Math.Max(1, waveformDurationMinutes));
+        var timelineSeconds = (x - LeftMargin) / usableWidth * totalMinutes * 60d;
+
+        if (Mp3FileListItem.TryPlayTimelinePosition(GetFiles(), timelineSeconds))
+            e.Handled = true;
     }
 
     private void ZoomOutChart_Click(object sender, RoutedEventArgs e)
@@ -169,6 +193,10 @@ public partial class WorkoutChartView
         _combinedWaveformCache = null;
 
         var files = GetFiles();
+        var removedFiles = _activePlaybackPositions.Keys.Where(file => !files.Contains(file)).ToList();
+
+        foreach (var removedFile in removedFiles)
+            _activePlaybackPositions.Remove(removedFile);
 
         if (_playingFile is not null && !files.Contains(_playingFile))
         {
@@ -204,11 +232,36 @@ public partial class WorkoutChartView
 
     private void Mp3FileListItem_PlaybackProgressChanged(object? sender, PlaybackProgressChangedEventArgs e)
     {
-        _playingFile = e.File;
-        _playingPosition = e.Position;
+        if (e.IsPlaying)
+            _activePlaybackPositions[e.File] = e.Position;
+        else
+            _activePlaybackPositions.Remove(e.File);
+
+        var activePlayback = _activePlaybackPositions
+            .Select(item => new
+            {
+                File = item.Key,
+                Position = item.Value,
+                AbsoluteSeconds = GetPlaybackPositionMinutes(item.Key, item.Value) * 60d
+            })
+            .Where(item => item.AbsoluteSeconds >= 0)
+            .OrderByDescending(item => item.AbsoluteSeconds)
+            .FirstOrDefault();
+
+        if (activePlayback is null)
+        {
+            _playingFile = null;
+            _playingPosition = TimeSpan.Zero;
+        }
+        else
+        {
+            _playingFile = activePlayback.File;
+            _playingPosition = activePlayback.Position;
+        }
+
         DrawChart();
 
-        if (e.IsPlaying)
+        if (activePlayback is not null)
             EnsurePlaybackMarkerVisible();
     }
 
@@ -220,12 +273,14 @@ public partial class WorkoutChartView
         ChartCanvas.Children.Clear();
 
         var chartData = GetChartDataPoints();
+        var files = GetFiles();
         var width = ChartCanvas.ActualWidth;
         var height = ChartCanvas.ActualHeight;
         var usableWidth = width - LeftMargin - RightMargin;
         var usableHeight = height - TopMargin - BottomMargin;
         var chartDurationMinutes = Math.Max(1, chartData.Sum(point => point.Duration));
         var combinedWaveform = BuildCombinedWaveform();
+        var fileTimeline = BuildFileTimeline(files);
         var waveformDurationMinutes = Math.Max(0, combinedWaveform.Count / 60d);
         var totalMinutes = Math.Max(chartDurationMinutes, Math.Max(1, waveformDurationMinutes));
 
@@ -272,44 +327,8 @@ public partial class WorkoutChartView
             currentTime += dataPoint.Duration;
         }
 
-        var points = BuildWaveformPoints(combinedWaveform, totalMinutes, usableWidth, usableHeight, chartData);
-
-        if (points.Count > 1)
-        {
-            var path = new ShapePath
-            {
-                Stroke = new SolidColorBrush(Color.FromRgb(88, 88, 88)),
-                Opacity = 0.82,
-                StrokeThickness = 2.1
-            };
-
-            var figure = new PathFigure { StartPoint = points[0], IsClosed = false, IsFilled = false };
-
-            for (var i = 1; i < points.Count; i++)
-                figure.Segments.Add(new LineSegment(points[i], true));
-
-            path.Data = new PathGeometry([figure]);
-            ChartCanvas.Children.Add(path);
-        }
-
-        if (points.Count <= 40)
-        {
-            foreach (var point in points)
-            {
-                var circle = new Ellipse
-                {
-                    Width = 5,
-                    Height = 5,
-                    Fill = new SolidColorBrush(Color.FromRgb(88, 88, 88)),
-                    Stroke = Brushes.White,
-                    StrokeThickness = 0.5
-                };
-
-                Canvas.SetLeft(circle, point.X - 2.5);
-                Canvas.SetTop(circle, point.Y - 2.5);
-                ChartCanvas.Children.Add(circle);
-            }
-        }
+        DrawTrackRanges(fileTimeline, totalMinutes, usableWidth, usableHeight);
+        DrawWaveformSegments(fileTimeline, totalMinutes, usableWidth, usableHeight, chartData);
 
         foreach (var minute in GenerateTimeScale(totalMinutes))
         {
@@ -318,6 +337,115 @@ public partial class WorkoutChartView
         }
 
         DrawPlaybackMarker(totalMinutes, height, usableWidth);
+    }
+
+    private void DrawTrackRanges(
+        IReadOnlyList<FileTimelineSegment> fileTimeline,
+        double totalMinutes,
+        double usableWidth,
+        double usableHeight)
+    {
+        foreach (var segment in fileTimeline)
+        {
+            var startMinutes = segment.StartSeconds / 60d;
+            var durationMinutes = (segment.EndSeconds - segment.StartSeconds) / 60d;
+            var x = LeftMargin + startMinutes / totalMinutes * usableWidth;
+            var width = Math.Max(2, durationMinutes / totalMinutes * usableWidth);
+
+            var background = new Rectangle
+            {
+                Width = width,
+                Height = usableHeight,
+                Fill = segment.File.AccentBrush,
+                Opacity = 0.06,
+                IsHitTestVisible = false
+            };
+
+            Canvas.SetLeft(background, x);
+            Canvas.SetTop(background, TopMargin);
+            ChartCanvas.Children.Add(background);
+
+            var marker = new Rectangle
+            {
+                Width = width,
+                Height = 8,
+                Fill = segment.File.AccentBrush,
+                Opacity = 0.72,
+                ToolTip = $"#{segment.File.Position} {segment.File.FileName}"
+            };
+
+            Canvas.SetLeft(marker, x);
+            Canvas.SetTop(marker, TopMargin + 2);
+            ChartCanvas.Children.Add(marker);
+
+            if (width >= 52)
+                AddTrackLabel($"#{segment.File.Position}", x + 4, TopMargin + 1, segment.File.AccentBrush);
+        }
+    }
+
+    private void DrawWaveformSegments(
+        IReadOnlyList<FileTimelineSegment> fileTimeline,
+        double totalMinutes,
+        double usableWidth,
+        double usableHeight,
+        IReadOnlyList<ChartDataPoint> chartData)
+    {
+        if (fileTimeline.Count == 0)
+        {
+            var fallbackPoints = BuildWaveformPoints([], totalMinutes, usableWidth, usableHeight, chartData);
+
+            if (fallbackPoints.Count > 1)
+                AddWaveformPath(fallbackPoints, new SolidColorBrush(Color.FromRgb(88, 88, 88)), false);
+
+            return;
+        }
+
+        foreach (var segment in fileTimeline)
+        {
+            var points = BuildWaveformPointsForFile(segment, totalMinutes, usableWidth, usableHeight);
+
+            if (points.Count <= 1)
+                continue;
+
+            AddWaveformPath(points, segment.File.AccentBrush, ReferenceEquals(segment.File, _playingFile));
+        }
+    }
+
+    private void AddWaveformPath(IReadOnlyList<Point> points, Brush stroke, bool isPlaying)
+    {
+        var path = new ShapePath
+        {
+            Stroke = stroke,
+            Opacity = isPlaying ? 1 : 0.84,
+            StrokeThickness = isPlaying ? 3.1 : 2.25,
+            StrokeStartLineCap = PenLineCap.Round,
+            StrokeEndLineCap = PenLineCap.Round,
+            StrokeLineJoin = PenLineJoin.Round
+        };
+
+        var figure = new PathFigure { StartPoint = points[0], IsClosed = false, IsFilled = false };
+
+        for (var i = 1; i < points.Count; i++)
+            figure.Segments.Add(new LineSegment(points[i], true));
+
+        path.Data = new PathGeometry([figure]);
+        ChartCanvas.Children.Add(path);
+    }
+
+    private void AddTrackLabel(string text, double x, double y, Brush foreground)
+    {
+        var textBlock = new TextBlock
+        {
+            Text = text,
+            FontSize = 10,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = foreground,
+            IsHitTestVisible = false
+        };
+
+        ChartCanvas.Children.Add(textBlock);
+        Canvas.SetLeft(textBlock, x);
+        Canvas.SetTop(textBlock, y);
     }
 
     private void AddLine(double x1, double y1, double x2, double y2)
@@ -438,6 +566,29 @@ public partial class WorkoutChartView
         return combined;
     }
 
+    private IReadOnlyList<FileTimelineSegment> BuildFileTimeline(IReadOnlyList<Mp3File> files)
+    {
+        if (files.Count == 0)
+            return [];
+
+        var segments = new List<FileTimelineSegment>(files.Count);
+        double startSeconds = 0;
+
+        for (var index = 0; index < files.Count; index++)
+        {
+            var file = files[index];
+            var durationSeconds = file.Waveform.Count;
+            segments.Add(new FileTimelineSegment(file, startSeconds, startSeconds + durationSeconds));
+
+            startSeconds += durationSeconds;
+
+            if (index < files.Count - 1)
+                startSeconds -= GetOverlapSeconds(file, files[index + 1]);
+        }
+
+        return segments;
+    }
+
     private List<Point> BuildWaveformPoints(
         IReadOnlyList<double> combinedWaveform,
         double totalMinutes,
@@ -493,6 +644,51 @@ public partial class WorkoutChartView
         }
 
         return fallbackPoints;
+    }
+
+    private List<Point> BuildWaveformPointsForFile(
+        FileTimelineSegment segment,
+        double totalMinutes,
+        double usableWidth,
+        double usableHeight)
+    {
+        var waveform = segment.File.Waveform;
+
+        if (waveform.Count == 0)
+            return [];
+
+        var reducedWaveform = ReduceWaveformResolution(waveform, FinalChartSampleSeconds);
+        var smoothedWaveform = SmoothWaveform(reducedWaveform, WaveformSmoothingRadius);
+        var widthInPixels = Math.Max(16, (segment.EndSeconds - segment.StartSeconds) / 60d / totalMinutes * usableWidth);
+        var targetPointCount = Math.Max(2, (int)Math.Ceiling(widthInPixels / WaveformPointReductionFactor));
+        var bucketSize = Math.Max(1, smoothedWaveform.Count / (double)targetPointCount);
+        var points = new List<Point>(targetPointCount);
+
+        for (var bucketIndex = 0; bucketIndex < targetPointCount; bucketIndex++)
+        {
+            var start = (int)Math.Floor(bucketIndex * bucketSize);
+            var end = Math.Min(smoothedWaveform.Count, (int)Math.Floor((bucketIndex + 1) * bucketSize));
+
+            if (start >= smoothedWaveform.Count)
+                break;
+
+            if (end <= start)
+                end = Math.Min(smoothedWaveform.Count, start + 1);
+
+            double amplitudeSum = 0;
+
+            for (var sampleIndex = start; sampleIndex < end; sampleIndex++)
+                amplitudeSum += smoothedWaveform[sampleIndex];
+
+            var amplitude = amplitudeSum / (end - start);
+            var sampleCenter = start + (end - start) / 2d;
+            var timeInMinutes = (segment.StartSeconds + sampleCenter * FinalChartSampleSeconds) / 60d;
+            var x = LeftMargin + timeInMinutes / totalMinutes * usableWidth;
+            var y = TopMargin + usableHeight - amplitude * usableHeight;
+            points.Add(new Point(x, y));
+        }
+
+        return points;
     }
 
     private static List<double> SmoothWaveform(IReadOnlyList<double> waveform, int radius)
@@ -569,7 +765,7 @@ public partial class WorkoutChartView
             Y1 = TopMargin,
             X2 = x,
             Y2 = chartHeight - BottomMargin,
-            Stroke = Brushes.Black,
+            Stroke = _playingFile.AccentBrush,
             StrokeThickness = 3,
             Opacity = 0.98
         });

@@ -10,7 +10,8 @@ namespace WorkoutMixer.Components;
 
 public partial class Mp3FileListItem
 {
-    private static Mp3FileListItem? _activePlayer;
+    private const double PreviewOverlapSeconds = 5;
+    private static readonly HashSet<Mp3FileListItem> LoadedItems = [];
 
     public static readonly DependencyProperty FileProperty = DependencyProperty.Register(nameof(File), typeof(Mp3File), typeof(Mp3FileListItem), new PropertyMetadata(null, OnFileChanged));
     public static readonly DependencyProperty MoveUpCommandProperty = DependencyProperty.Register(nameof(MoveUpCommand), typeof(ICommand), typeof(Mp3FileListItem));
@@ -23,8 +24,10 @@ public partial class Mp3FileListItem
     };
 
     private AudioFileReader? _audioReader;
+    private bool _isAutoStarted;
     private bool _isSeeking;
     private bool _isUpdatingSlider;
+    private Mp3FileListItem? _nextCrossfadeItem;
     private WaveOutEvent? _waveOut;
 
     public Mp3FileListItem()
@@ -63,6 +66,69 @@ public partial class Mp3FileListItem
 
     public static event EventHandler<PlaybackProgressChangedEventArgs>? PlaybackProgressChanged;
 
+    public static bool TryPlayTimelinePosition(IReadOnlyList<Mp3File> files, double timelineSeconds)
+    {
+        if (files.Count == 0)
+            return false;
+
+        var segments = BuildTimeline(files);
+        var clampedSeconds = Math.Clamp(timelineSeconds, 0, Math.Max(0, segments[^1].EndSeconds));
+        var targetIndex = segments.FindLastIndex(segment => clampedSeconds >= segment.StartSeconds);
+
+        if (targetIndex < 0)
+            return false;
+
+        var targetSegment = segments[targetIndex];
+        var targetItem = GetLoadedItem(targetSegment.File);
+
+        if (targetItem is null)
+            return false;
+
+        foreach (var item in LoadedItems.ToList())
+            item.StopPlayback(resetPosition: true);
+
+        if (targetIndex > 0)
+        {
+            var previousSegment = segments[targetIndex - 1];
+            var overlapStart = targetSegment.StartSeconds;
+            var overlapEnd = Math.Min(previousSegment.EndSeconds, targetSegment.EndSeconds);
+
+            if (clampedSeconds >= overlapStart && clampedSeconds < overlapEnd)
+            {
+                var previousItem = GetLoadedItem(previousSegment.File);
+
+                if (previousItem is not null)
+                {
+                    var overlapDuration = Math.Max(0.001, overlapEnd - overlapStart);
+                    var progress = Math.Clamp((clampedSeconds - overlapStart) / overlapDuration, 0, 1);
+
+                    previousItem.StartPlaybackAt(
+                        TimeSpan.FromSeconds(clampedSeconds - previousSegment.StartSeconds),
+                        1 - progress,
+                        stopOthers: false,
+                        autoStarted: false);
+
+                    targetItem.StartPlaybackAt(
+                        TimeSpan.FromSeconds(clampedSeconds - targetSegment.StartSeconds),
+                        progress,
+                        stopOthers: false,
+                        autoStarted: true);
+
+                    previousItem._nextCrossfadeItem = targetItem;
+                    return true;
+                }
+            }
+        }
+
+        targetItem.StartPlaybackAt(
+            TimeSpan.FromSeconds(clampedSeconds - targetSegment.StartSeconds),
+            1,
+            stopOthers: false,
+            autoStarted: false);
+
+        return true;
+    }
+
     private static void OnFileChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs _)
     {
         var control = (Mp3FileListItem)dependencyObject;
@@ -73,11 +139,13 @@ public partial class Mp3FileListItem
 
     private void Mp3FileListItem_Loaded(object sender, RoutedEventArgs e)
     {
+        LoadedItems.Add(this);
         UpdatePlaybackUi();
     }
 
     private void Mp3FileListItem_Unloaded(object sender, RoutedEventArgs e)
     {
+        LoadedItems.Remove(this);
         DisposePlayer();
     }
 
@@ -86,18 +154,8 @@ public partial class Mp3FileListItem
         if (File is null)
             return;
 
-        EnsurePlayer();
-
-        if (_activePlayer is not null && _activePlayer != this)
-            _activePlayer.PausePlayback();
-
-        _activePlayer = this;
-
-        _waveOut?.Play();
-        _playbackTimer.Start();
-
-        UpdatePlaybackUi();
-        PublishPlaybackProgress(true);
+        StopOtherPlayers();
+        StartPlayback(stopOthers: false);
     }
 
     private void PauseButton_Click(object sender, RoutedEventArgs e)
@@ -107,9 +165,11 @@ public partial class Mp3FileListItem
 
     private void PausePlayback()
     {
+        _nextCrossfadeItem?.PausePlayback();
         _waveOut?.Pause();
         _playbackTimer.Stop();
 
+        _nextCrossfadeItem = null;
         UpdatePlaybackUi();
         PublishPlaybackProgress(false);
     }
@@ -161,10 +221,53 @@ public partial class Mp3FileListItem
         if (_audioReader is null || _isSeeking)
             return;
 
+        ProcessCrossfadePreview();
+
         _isUpdatingSlider = true;
         SeekSlider.Value = Math.Min(SeekSlider.Maximum, _audioReader.CurrentTime.TotalSeconds);
         _isUpdatingSlider = false;
         UpdateCurrentTimeText(_audioReader.CurrentTime);
+        PublishPlaybackProgress(true);
+    }
+
+    private void StartPlayback(bool stopOthers, double volume = 1, bool autoStarted = false)
+    {
+        if (File is null)
+            return;
+
+        if (stopOthers)
+            StopOtherPlayers();
+
+        EnsurePlayer();
+
+        _isAutoStarted = autoStarted;
+        _audioReader!.Volume = (float)Math.Clamp(volume, 0, 1);
+        _waveOut?.Play();
+        _playbackTimer.Start();
+
+        UpdatePlaybackUi();
+        PublishPlaybackProgress(true);
+    }
+
+    private void StartPlaybackAt(TimeSpan position, double volume, bool stopOthers, bool autoStarted)
+    {
+        if (File is null)
+            return;
+
+        if (stopOthers)
+            StopOtherPlayers();
+
+        EnsurePlayer();
+
+        var safePosition = TimeSpan.FromSeconds(Math.Clamp(position.TotalSeconds, 0, File.Duration.TotalSeconds));
+        _audioReader!.CurrentTime = safePosition;
+        _audioReader.Volume = (float)Math.Clamp(volume, 0, 1);
+        _isAutoStarted = autoStarted;
+        _nextCrossfadeItem = null;
+        _waveOut?.Play();
+        _playbackTimer.Start();
+
+        UpdatePlaybackUi();
         PublishPlaybackProgress(true);
     }
 
@@ -187,9 +290,14 @@ public partial class Mp3FileListItem
         Dispatcher.Invoke(() =>
         {
             if (_audioReader is not null && _audioReader.Position >= _audioReader.Length)
+            {
                 _audioReader.CurrentTime = TimeSpan.Zero;
+                _audioReader.Volume = 1;
+            }
 
             _playbackTimer.Stop();
+            _nextCrossfadeItem = null;
+            _isAutoStarted = false;
             UpdatePlaybackUi();
             PublishPlaybackProgress(false);
         });
@@ -208,9 +316,8 @@ public partial class Mp3FileListItem
     private void DisposePlayer()
     {
         _playbackTimer.Stop();
-
-        if (_activePlayer == this)
-            _activePlayer = null;
+        _nextCrossfadeItem = null;
+        _isAutoStarted = false;
 
         if (_waveOut is not null)
         {
@@ -259,6 +366,8 @@ public partial class Mp3FileListItem
             return;
 
         _audioReader.CurrentTime = TimeSpan.FromSeconds(SeekSlider.Value);
+        _audioReader.Volume = 1;
+        _nextCrossfadeItem = null;
         UpdateCurrentTimeText(_audioReader.CurrentTime);
     }
 
@@ -279,5 +388,107 @@ public partial class Mp3FileListItem
                 File,
                 _audioReader?.CurrentTime ?? TimeSpan.Zero,
                 isPlaying));
+    }
+
+    private void ProcessCrossfadePreview()
+    {
+        if (_audioReader is null || File is null || _waveOut?.PlaybackState != PlaybackState.Playing)
+            return;
+
+        var remaining = _audioReader.TotalTime - _audioReader.CurrentTime;
+
+        if (remaining <= TimeSpan.Zero)
+            return;
+
+        var overlap = TimeSpan.FromSeconds(Math.Min(PreviewOverlapSeconds, File.Duration.TotalSeconds));
+
+        if (remaining > overlap)
+        {
+            _audioReader.Volume = 1;
+            return;
+        }
+
+        var nextItem = _nextCrossfadeItem ?? GetNextItem();
+
+        if (nextItem is null)
+        {
+            _audioReader.Volume = 1;
+            return;
+        }
+
+        if (_nextCrossfadeItem is null)
+        {
+            _nextCrossfadeItem = nextItem;
+            nextItem.StartPlayback(stopOthers: false, volume: 0, autoStarted: true);
+        }
+
+        var progress = 1 - remaining.TotalSeconds / overlap.TotalSeconds;
+        _audioReader.Volume = (float)Math.Clamp(1 - progress, 0, 1);
+
+        if (nextItem._audioReader is not null)
+            nextItem._audioReader.Volume = (float)Math.Clamp(progress, 0, 1);
+    }
+
+    private Mp3FileListItem? GetNextItem()
+    {
+        if (File is null)
+            return null;
+
+        return LoadedItems
+            .Where(item => item != this && item.File is not null)
+            .OrderBy(item => item.File!.Position)
+            .FirstOrDefault(item => item.File!.Position == File.Position + 1);
+    }
+
+    private static List<(Mp3File File, double StartSeconds, double EndSeconds)> BuildTimeline(IReadOnlyList<Mp3File> files)
+    {
+        var segments = new List<(Mp3File File, double StartSeconds, double EndSeconds)>(files.Count);
+        double startSeconds = 0;
+
+        for (var index = 0; index < files.Count; index++)
+        {
+            var file = files[index];
+            var durationSeconds = file.Waveform.Count;
+            segments.Add((file, startSeconds, startSeconds + durationSeconds));
+
+            startSeconds += durationSeconds;
+
+            if (index < files.Count - 1)
+                startSeconds -= Math.Min(PreviewOverlapSeconds, Math.Min(file.Waveform.Count, files[index + 1].Waveform.Count));
+        }
+
+        return segments;
+    }
+
+    private static Mp3FileListItem? GetLoadedItem(Mp3File file)
+    {
+        return LoadedItems.FirstOrDefault(item => ReferenceEquals(item.File, file));
+    }
+
+    private void StopOtherPlayers()
+    {
+        foreach (var item in LoadedItems.Where(item => item != this).ToList())
+            item.StopPlayback(resetPosition: true);
+    }
+
+    private void StopPlayback(bool resetPosition)
+    {
+        _playbackTimer.Stop();
+        _nextCrossfadeItem = null;
+        _isAutoStarted = false;
+
+        if (_waveOut is not null)
+            _waveOut.Pause();
+
+        if (_audioReader is not null)
+        {
+            _audioReader.Volume = 1;
+
+            if (resetPosition)
+                _audioReader.CurrentTime = TimeSpan.Zero;
+        }
+
+        UpdatePlaybackUi();
+        PublishPlaybackProgress(false);
     }
 }

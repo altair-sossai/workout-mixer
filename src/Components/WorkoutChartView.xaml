@@ -58,6 +58,7 @@
                           CanContentScroll="True">
                 <Canvas x:Name="ChartCanvas"
                         Background="White"
+                        MouseLeftButtonDown="ChartCanvas_MouseLeftButtonDown"
                         Width="1200"
                         ToolTipService.BetweenShowDelay="0"
                         ToolTipService.InitialShowDelay="0"

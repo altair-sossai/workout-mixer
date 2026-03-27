@@ -3,9 +3,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              x:Name="Root">
-    <Border Padding="3" Background="#FFF8FAFD" BorderBrush="#FFDDE5EE" BorderThickness="1" CornerRadius="7">
+    <Border Padding="3"
+            Background="#FFF8FAFD"
+            BorderBrush="{Binding File.AccentBrush, ElementName=Root}"
+            BorderThickness="1"
+            CornerRadius="7">
         <Grid>
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="4" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -14,25 +19,32 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <Border Width="24"
+            <Border Grid.RowSpan="1"
+                    Width="4"
+                    Margin="0"
+                    Background="{Binding File.AccentBrush, ElementName=Root}"
+                    CornerRadius="5" />
+
+            <Border Grid.Column="1"
+                    Width="24"
                     Height="24"
-                    Margin="0,0,6,0"
-                    Background="#FFE8F1FC"
+                    Margin="6,0,6,0"
+                    Background="{Binding File.AccentBrush, ElementName=Root}"
                     CornerRadius="8">
                 <iconPacks:PackIconModern Width="12"
                                           Height="12"
                                           HorizontalAlignment="Center"
                                           VerticalAlignment="Center"
-                                          Foreground="#FF1F5FAE"
+                                          Foreground="White"
                                           Kind="Music" />
             </Border>
 
-            <DockPanel Grid.Column="1"
+            <DockPanel Grid.Column="2"
                        Margin="0,0,8,0"
                        VerticalAlignment="Center"
                        LastChildFill="True">
                 <Border Padding="4,1"
-                        Background="#FF1F6FEB"
+                        Background="{Binding File.AccentBrush, ElementName=Root}"
                         CornerRadius="6"
                         DockPanel.Dock="Left">
                     <TextBlock FontSize="9"
@@ -59,7 +71,7 @@
             </DockPanel>
 
             <TextBlock x:Name="CurrentTimeTextBlock"
-                       Grid.Column="2"
+                       Grid.Column="3"
                        Margin="0,0,8,0"
                        VerticalAlignment="Center"
                        FontSize="10"
@@ -68,7 +80,7 @@
                        Text="00:00 /" />
 
             <Slider x:Name="SeekSlider"
-                    Grid.Column="3"
+                    Grid.Column="4"
                     Margin="0,0,8,0"
                     VerticalAlignment="Center"
                     Background="Transparent"
@@ -81,7 +93,7 @@
                     Thumb.DragStarted="SeekSlider_DragStarted"
                     ValueChanged="SeekSlider_ValueChanged" />
 
-            <StackPanel Grid.Column="4"
+            <StackPanel Grid.Column="5"
                         Margin="0,0,8,0"
                         Orientation="Horizontal"
                         VerticalAlignment="Center">
@@ -107,14 +119,14 @@
                 </Button>
             </StackPanel>
 
-            <StackPanel Grid.Column="5"
+            <StackPanel Grid.Column="6"
                         Orientation="Horizontal"
                         VerticalAlignment="Center">
                 <Button Width="24"
                         Height="22"
                         Margin="0,0,2,0"
                         Command="{Binding MoveUpCommand, ElementName=Root}"
-                        CommandParameter="{Binding File, ElementName=Root}"
+                        CommandParameter="{Binding}"
                         ToolTip="Move up">
                     <iconPacks:PackIconModern Width="11"
                                               Height="11"
@@ -124,7 +136,7 @@
                         Height="22"
                         Margin="0,0,2,0"
                         Command="{Binding MoveDownCommand, ElementName=Root}"
-                        CommandParameter="{Binding File, ElementName=Root}"
+                        CommandParameter="{Binding}"
                         ToolTip="Move down">
                     <iconPacks:PackIconModern Width="11"
                                               Height="11"
@@ -133,7 +145,7 @@
                 <Button Width="24"
                         Height="22"
                         Command="{Binding RemoveCommand, ElementName=Root}"
-                        CommandParameter="{Binding File, ElementName=Root}"
+                        CommandParameter="{Binding}"
                         ToolTip="Remove file">
                     <iconPacks:PackIconModern Width="11"
                                               Height="11"
