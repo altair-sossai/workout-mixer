@@ -24,7 +24,6 @@ public partial class Mp3FileListItem
     };
 
     private AudioFileReader? _audioReader;
-    private bool _isAutoStarted;
     private bool _isSeeking;
     private bool _isUpdatingSlider;
     private Mp3FileListItem? _nextCrossfadeItem;
@@ -85,7 +84,7 @@ public partial class Mp3FileListItem
             return false;
 
         foreach (var item in LoadedItems.ToList())
-            item.StopPlayback(resetPosition: true);
+            item.StopPlayback(true);
 
         if (targetIndex > 0)
         {
@@ -105,14 +104,12 @@ public partial class Mp3FileListItem
                     previousItem.StartPlaybackAt(
                         TimeSpan.FromSeconds(clampedSeconds - previousSegment.StartSeconds),
                         1 - progress,
-                        stopOthers: false,
-                        autoStarted: false);
+                        false);
 
                     targetItem.StartPlaybackAt(
                         TimeSpan.FromSeconds(clampedSeconds - targetSegment.StartSeconds),
                         progress,
-                        stopOthers: false,
-                        autoStarted: true);
+                        false);
 
                     previousItem._nextCrossfadeItem = targetItem;
                     return true;
@@ -123,8 +120,7 @@ public partial class Mp3FileListItem
         targetItem.StartPlaybackAt(
             TimeSpan.FromSeconds(clampedSeconds - targetSegment.StartSeconds),
             1,
-            stopOthers: false,
-            autoStarted: false);
+            false);
 
         return true;
     }
@@ -155,7 +151,7 @@ public partial class Mp3FileListItem
             return;
 
         StopOtherPlayers();
-        StartPlayback(stopOthers: false);
+        StartPlayback(false);
     }
 
     private void PauseButton_Click(object sender, RoutedEventArgs e)
@@ -230,7 +226,7 @@ public partial class Mp3FileListItem
         PublishPlaybackProgress(true);
     }
 
-    private void StartPlayback(bool stopOthers, double volume = 1, bool autoStarted = false)
+    private void StartPlayback(bool stopOthers, double volume = 1)
     {
         if (File is null)
             return;
@@ -240,7 +236,6 @@ public partial class Mp3FileListItem
 
         EnsurePlayer();
 
-        _isAutoStarted = autoStarted;
         _audioReader!.Volume = (float)Math.Clamp(volume, 0, 1);
         _waveOut?.Play();
         _playbackTimer.Start();
@@ -249,7 +244,7 @@ public partial class Mp3FileListItem
         PublishPlaybackProgress(true);
     }
 
-    private void StartPlaybackAt(TimeSpan position, double volume, bool stopOthers, bool autoStarted)
+    private void StartPlaybackAt(TimeSpan position, double volume, bool stopOthers)
     {
         if (File is null)
             return;
@@ -262,7 +257,6 @@ public partial class Mp3FileListItem
         var safePosition = TimeSpan.FromSeconds(Math.Clamp(position.TotalSeconds, 0, File.Duration.TotalSeconds));
         _audioReader!.CurrentTime = safePosition;
         _audioReader.Volume = (float)Math.Clamp(volume, 0, 1);
-        _isAutoStarted = autoStarted;
         _nextCrossfadeItem = null;
         _waveOut?.Play();
         _playbackTimer.Start();
@@ -297,7 +291,6 @@ public partial class Mp3FileListItem
 
             _playbackTimer.Stop();
             _nextCrossfadeItem = null;
-            _isAutoStarted = false;
             UpdatePlaybackUi();
             PublishPlaybackProgress(false);
         });
@@ -317,7 +310,6 @@ public partial class Mp3FileListItem
     {
         _playbackTimer.Stop();
         _nextCrossfadeItem = null;
-        _isAutoStarted = false;
 
         if (_waveOut is not null)
         {
@@ -419,7 +411,7 @@ public partial class Mp3FileListItem
         if (_nextCrossfadeItem is null)
         {
             _nextCrossfadeItem = nextItem;
-            nextItem.StartPlayback(stopOthers: false, volume: 0, autoStarted: true);
+            nextItem.StartPlayback(false, 0);
         }
 
         var progress = 1 - remaining.TotalSeconds / overlap.TotalSeconds;
@@ -468,14 +460,13 @@ public partial class Mp3FileListItem
     private void StopOtherPlayers()
     {
         foreach (var item in LoadedItems.Where(item => item != this).ToList())
-            item.StopPlayback(resetPosition: true);
+            item.StopPlayback(true);
     }
 
     private void StopPlayback(bool resetPosition)
     {
         _playbackTimer.Stop();
         _nextCrossfadeItem = null;
-        _isAutoStarted = false;
 
         if (_waveOut is not null)
             _waveOut.Pause();

@@ -1,54 +1,54 @@
 # WorkoutMixer
 
-O `WorkoutMixer` é um aplicativo desktop em WPF para montar trilhas de treino a partir de arquivos MP3. Ele permite organizar a ordem das músicas, visualizar a duração total, aplicar transições suaves entre as faixas e exportar um mix final em um único arquivo `.mp3`.
+`WorkoutMixer` is a WPF desktop application for building workout playlists from MP3 files. It lets you organize track order, view total duration, apply smooth transitions between songs, and export the final result as a single `.mp3` file.
 
-Além da mixagem de áudio, o projeto também permite montar uma linha de intensidade do treino com zonas configuráveis, duração por segmento e RPM, gerando um relatório textual com a sequência planejada.
+In addition to audio mixing, the project also lets you define a workout intensity timeline with configurable zones, segment duration, and RPM, then export a text report with the planned sequence.
 
-## O que o projeto faz
+## What the project does
 
-- Importa uma ou mais faixas MP3.
-- Permite reordenar e remover músicas da lista.
-- Gera um mix final com `crossfade` entre as faixas.
-- Exibe informações como duração, tamanho e forma de onda dos arquivos.
-- Permite montar segmentos de intensidade do treino com zonas configuradas.
-- Exporta um relatório `.txt` com a sequência de intensidades do treino.
+- Imports one or more MP3 tracks.
+- Lets you reorder and remove songs from the list.
+- Generates a final mix with crossfade transitions between tracks.
+- Displays information such as duration, file size, and waveform data.
+- Lets you create workout intensity segments using configured zones.
+- Exports a `.txt` report with the workout intensity sequence.
 
-## Tecnologias usadas
+## Technologies used
 
 - `.NET 10`
 - `WPF`
 - `MahApps.Metro`
 - `NAudio`
 - `NAudio.Lame`
-- `Microsoft.Extensions.Hosting` e `DependencyInjection`
+- `Microsoft.Extensions.Hosting` and `DependencyInjection`
 - `Serilog`
 
-## Configuração
+## Configuration
 
-As zonas de intensidade do gráfico ficam em [`src/appsettings.json`](/D:/Pessoal/WorkoutMixer/src/appsettings.json). É ali que você pode ajustar nomes, cores e valores máximos de cada zona.
+The chart intensity zones are defined in [`src/appsettings.json`](/D:/Pessoal/WorkoutMixer/src/appsettings.json). You can adjust each zone's name, color, and maximum value there.
 
-## Como executar
+## How to run
 
-Pré-requisitos:
+Requirements:
 
 - Windows
-- SDK do `.NET 10`
+- `.NET 10` SDK
 
-Comandos:
+Commands:
 
 ```powershell
 dotnet restore src/WorkoutMixer.csproj
 dotnet run --project src/WorkoutMixer.csproj
 ```
 
-## Fluxo de uso
+## Usage flow
 
-1. Adicione os arquivos MP3.
-2. Reordene as faixas conforme o treino desejado.
-3. Monte os segmentos de intensidade no painel lateral.
-4. Exporte o mix final em MP3.
-5. Se quiser, exporte também o relatório de intensidades em `.txt`.
+1. Add the MP3 files.
+2. Reorder the tracks to match the desired workout flow.
+3. Build the intensity segments in the side panel.
+4. Export the final MP3 mix.
+5. Optionally export the intensity report as a `.txt` file.
 
-## Observação sobre o projeto
+## Project note
 
-Este projeto foi feito utilizando vibecoding na maioria das vezes. A proposta aqui foi construir algo útil de forma iterativa, rápida e prática, refinando a aplicação conforme as necessidades foram surgindo.
+This project was built using vibecoding most of the time. The idea was to create something useful in an iterative, fast, and practical way, refining the application as new needs came up.

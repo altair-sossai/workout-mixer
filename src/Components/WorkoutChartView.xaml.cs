@@ -2,6 +2,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using WorkoutMixer.Components.EventArgs;
@@ -12,8 +13,6 @@ namespace WorkoutMixer.Components;
 
 public partial class WorkoutChartView
 {
-    private sealed record FileTimelineSegment(Mp3File File, double StartSeconds, double EndSeconds);
-
     private const double BottomMargin = 32;
     private const double RightMargin = 18;
     private const double LeftMargin = 34;
@@ -36,8 +35,9 @@ public partial class WorkoutChartView
         typeof(WorkoutChartView),
         new PropertyMetadata(null, OnFilesChanged));
 
-    private INotifyCollectionChanged? _chartDataCollection;
     private readonly Dictionary<Mp3File, TimeSpan> _activePlaybackPositions = [];
+
+    private INotifyCollectionChanged? _chartDataCollection;
 
     private double _chartZoom = 1;
     private List<double>? _combinedWaveformCache;
@@ -103,7 +103,7 @@ public partial class WorkoutChartView
             DrawChart();
     }
 
-    private void ChartCanvas_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    private void ChartCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (ChartCanvas.ActualWidth <= 0 || ChartCanvas.ActualHeight <= 0)
             return;
@@ -850,4 +850,6 @@ public partial class WorkoutChartView
     {
         return Files?.ToList() ?? [];
     }
+
+    private sealed record FileTimelineSegment(Mp3File File, double StartSeconds, double EndSeconds);
 }

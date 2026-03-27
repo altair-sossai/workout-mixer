@@ -1,14 +1,15 @@
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
-using NAudio.Wave;
 using System.Windows.Media;
+using NAudio.Wave;
 
 namespace WorkoutMixer.Models;
 
 public sealed class Mp3File : INotifyPropertyChanged
 {
     private static readonly string[] Suffixes = ["B", "KB", "MB", "GB"];
+
     private static readonly Color[] AccentPalette =
     [
         Color.FromRgb(0xD9, 0x4E, 0x41),
@@ -20,6 +21,7 @@ public sealed class Mp3File : INotifyPropertyChanged
         Color.FromRgb(0x2E, 0x8B, 0x57),
         Color.FromRgb(0xC0, 0x57, 0x2F)
     ];
+
     private readonly Lazy<IReadOnlyList<double>> _waveform;
 
     private Mp3File(string path, TimeSpan duration, long sizeBytes)
