@@ -21,8 +21,8 @@ public partial class MainWindow
 {
     private readonly AudioOptions _audioOptions;
     private readonly ExportOptions _exportOptions;
-    private readonly WorkoutDefaultsOptions _workoutDefaultsOptions;
     private readonly LAMEPreset _mp3Preset;
+    private readonly WorkoutDefaultsOptions _workoutDefaultsOptions;
 
     public MainWindow(
         IOptions<ChartOptions> chartOptions,

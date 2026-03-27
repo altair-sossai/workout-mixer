@@ -16,7 +16,7 @@ internal sealed class AudioOptionsValidator : IValidateOptions<AudioOptions>
         if (options.TargetChannels <= 0)
             return ValidateOptionsResult.Fail("Audio target channels must be greater than zero.");
 
-        if (!Enum.TryParse<LAMEPreset>(options.Mp3Preset, ignoreCase: true, out _))
+        if (!Enum.TryParse<LAMEPreset>(options.Mp3Preset, true, out _))
             return ValidateOptionsResult.Fail("Audio MP3 preset must match a valid LAME preset name.");
 
         return ValidateOptionsResult.Success;

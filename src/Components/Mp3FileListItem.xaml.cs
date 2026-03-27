@@ -5,8 +5,8 @@ using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using NAudio.Wave;
-using WorkoutMixer.Configuration;
 using WorkoutMixer.Components.EventArgs;
+using WorkoutMixer.Configuration;
 using WorkoutMixer.Models;
 
 namespace WorkoutMixer.Components;
@@ -19,6 +19,7 @@ public partial class Mp3FileListItem
     public static readonly DependencyProperty MoveUpCommandProperty = DependencyProperty.Register(nameof(MoveUpCommand), typeof(ICommand), typeof(Mp3FileListItem));
     public static readonly DependencyProperty MoveDownCommandProperty = DependencyProperty.Register(nameof(MoveDownCommand), typeof(ICommand), typeof(Mp3FileListItem));
     public static readonly DependencyProperty RemoveCommandProperty = DependencyProperty.Register(nameof(RemoveCommand), typeof(ICommand), typeof(Mp3FileListItem));
+    private readonly AudioOptions _audioOptions;
 
     private readonly DispatcherTimer _playbackTimer = new()
     {
@@ -30,7 +31,6 @@ public partial class Mp3FileListItem
     private bool _isUpdatingSlider;
     private Mp3FileListItem? _nextCrossfadeItem;
     private WaveOutEvent? _waveOut;
-    private readonly AudioOptions _audioOptions;
 
     public Mp3FileListItem()
     {

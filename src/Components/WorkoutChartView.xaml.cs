@@ -7,8 +7,8 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using WorkoutMixer.Configuration;
 using WorkoutMixer.Components.EventArgs;
+using WorkoutMixer.Configuration;
 using WorkoutMixer.Models;
 using ShapePath = System.Windows.Shapes.Path;
 
@@ -35,6 +35,8 @@ public partial class WorkoutChartView
         new PropertyMetadata(null, OnFilesChanged));
 
     private readonly Dictionary<Mp3File, TimeSpan> _activePlaybackPositions = [];
+    private readonly AudioOptions _audioOptions;
+    private readonly WaveformOptions _waveformOptions;
 
     private INotifyCollectionChanged? _chartDataCollection;
 
@@ -43,8 +45,6 @@ public partial class WorkoutChartView
     private INotifyCollectionChanged? _filesCollection;
     private Mp3File? _playingFile;
     private TimeSpan _playingPosition;
-    private readonly AudioOptions _audioOptions;
-    private readonly WaveformOptions _waveformOptions;
 
     public WorkoutChartView()
     {

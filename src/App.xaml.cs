@@ -13,7 +13,6 @@ public partial class App
     private static readonly Type Type = typeof(App);
     private static readonly Assembly Assembly = Type.Assembly;
     private readonly IHost _host;
-    public static IServiceProvider Services => ((App)Current)._host.Services;
 
     public App()
     {
@@ -31,6 +30,8 @@ public partial class App
             throw;
         }
     }
+
+    public static IServiceProvider Services => ((App)Current)._host.Services;
 
     protected override async void OnStartup(StartupEventArgs e)
     {

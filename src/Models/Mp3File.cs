@@ -9,18 +9,7 @@ namespace WorkoutMixer.Models;
 public sealed class Mp3File : INotifyPropertyChanged
 {
     private static readonly string[] Suffixes = ["B", "KB", "MB", "GB"];
-
-    private static readonly Color[] AccentPalette =
-    [
-        Color.FromRgb(0xD9, 0x4E, 0x41),
-        Color.FromRgb(0x1D, 0x78, 0xB5),
-        Color.FromRgb(0x20, 0x8D, 0x6A),
-        Color.FromRgb(0xB5, 0x6A, 0x12),
-        Color.FromRgb(0x8A, 0x49, 0xB8),
-        Color.FromRgb(0xC2, 0x3B, 0x74),
-        Color.FromRgb(0x2E, 0x8B, 0x57),
-        Color.FromRgb(0xC0, 0x57, 0x2F)
-    ];
+    private static int _nextAccentIndex = -1;
 
     private readonly Lazy<IReadOnlyList<double>> _waveform;
 
@@ -30,7 +19,7 @@ public sealed class Mp3File : INotifyPropertyChanged
         FileName = System.IO.Path.GetFileName(path);
         Duration = duration;
         SizeBytes = sizeBytes;
-        AccentColor = PickAccentColor(path);
+        AccentColor = PickAccentColor();
         AccentBrush = CreateFrozenBrush(AccentColor);
         _waveform = new Lazy<IReadOnlyList<double>>(() => CreateWaveform(Path));
     }
@@ -158,10 +147,67 @@ public sealed class Mp3File : INotifyPropertyChanged
         return $"{value:0.##} {Suffixes[suffixIndex]}";
     }
 
-    private static Color PickAccentColor(string path)
+    private static Color PickAccentColor()
     {
-        var index = Math.Abs(StringComparer.OrdinalIgnoreCase.GetHashCode(path)) % AccentPalette.Length;
-        return AccentPalette[index];
+        var index = Interlocked.Increment(ref _nextAccentIndex);
+        return GenerateSequentialAccentColor(index);
+    }
+
+    private static Color GenerateSequentialAccentColor(int index)
+    {
+        const double goldenRatioConjugate = 0.618033988749895;
+        var hue = index * goldenRatioConjugate % 1d;
+
+        // Alternate saturation and value bands to keep adjacent generated colors distinct.
+        var saturation = 0.62 + index % 3 * 0.1;
+        var value = 0.72 + index % 2 * 0.12;
+
+        return ColorFromHsv(hue * 360d, Math.Min(saturation, 0.92), Math.Min(value, 0.92));
+    }
+
+    private static Color ColorFromHsv(double hue, double saturation, double value)
+    {
+        var chroma = value * saturation;
+        var hueSection = hue / 60d;
+        var x = chroma * (1 - Math.Abs(hueSection % 2 - 1));
+        double red = 0;
+        double green = 0;
+        double blue = 0;
+
+        switch (hueSection)
+        {
+            case >= 0 and < 1:
+                red = chroma;
+                green = x;
+                break;
+            case >= 1 and < 2:
+                red = x;
+                green = chroma;
+                break;
+            case >= 2 and < 3:
+                green = chroma;
+                blue = x;
+                break;
+            case >= 3 and < 4:
+                green = x;
+                blue = chroma;
+                break;
+            case >= 4 and < 5:
+                red = x;
+                blue = chroma;
+                break;
+            default:
+                red = chroma;
+                blue = x;
+                break;
+        }
+
+        var match = value - chroma;
+
+        return Color.FromRgb(
+            (byte)Math.Round((red + match) * 255),
+            (byte)Math.Round((green + match) * 255),
+            (byte)Math.Round((blue + match) * 255));
     }
 
     private static SolidColorBrush CreateFrozenBrush(Color color)
