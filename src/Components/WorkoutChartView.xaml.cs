@@ -367,6 +367,16 @@ public partial class WorkoutChartView
         return (byte)Math.Clamp(component + (255 - component) * amount, 0, 255);
     }
 
+    private Brush GetThemeBrush(string resourceKey, Color fallbackColor)
+    {
+        if (TryFindResource(resourceKey) is Brush brush)
+            return brush;
+
+        var fallbackBrush = new SolidColorBrush(fallbackColor);
+        fallbackBrush.Freeze();
+        return fallbackBrush;
+    }
+
     private void DrawTrackRanges(
         IReadOnlyList<FileTimelineSegment> fileTimeline,
         double totalMinutes,
@@ -423,7 +433,10 @@ public partial class WorkoutChartView
             var fallbackPoints = BuildWaveformPoints([], totalMinutes, usableWidth, usableHeight, chartData);
 
             if (fallbackPoints.Count > 1)
-                AddWaveformPath(fallbackPoints, new SolidColorBrush(Color.FromRgb(88, 88, 88)), false);
+                AddWaveformPath(
+                    fallbackPoints,
+                    GetThemeBrush("MahApps.Brushes.SystemControlForegroundBaseMedium", Color.FromRgb(88, 88, 88)),
+                    false);
 
             return;
         }
@@ -484,7 +497,7 @@ public partial class WorkoutChartView
             Y1 = y1,
             X2 = x2,
             Y2 = y2,
-            Stroke = Brushes.Black
+            Stroke = GetThemeBrush("MahApps.Brushes.SystemControlForegroundBaseHigh", Colors.Black)
         });
     }
 
@@ -496,8 +509,7 @@ public partial class WorkoutChartView
         if (minorStep <= 0)
             return;
 
-        var tickBrush = new SolidColorBrush(Color.FromRgb(90, 98, 110));
-        tickBrush.Freeze();
+        var tickBrush = GetThemeBrush("MahApps.Brushes.SystemControlForegroundBaseMediumHigh", Color.FromRgb(90, 98, 110));
 
         for (var minute = 0d; minute <= totalMinutes + 0.0001; minute += minorStep)
         {
@@ -523,7 +535,7 @@ public partial class WorkoutChartView
         {
             Text = text,
             FontSize = 10,
-            Foreground = new SolidColorBrush(Color.FromRgb(76, 86, 99))
+            Foreground = GetThemeBrush("MahApps.Brushes.SystemControlForegroundBaseMediumHigh", Color.FromRgb(76, 86, 99))
         };
 
         ChartCanvas.Children.Add(textBlock);

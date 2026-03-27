@@ -6,9 +6,10 @@
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              x:Name="Root">
     <Border Margin="0,0,4,0"
-            Padding="8"
-            Background="White"
-            CornerRadius="10">
+            Padding="12"
+            Background="{DynamicResource MahApps.Brushes.ThemeBackground}"
+            BorderBrush="{DynamicResource MahApps.Brushes.SystemControlForegroundBaseMediumLow}"
+            BorderThickness="1">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -19,8 +20,8 @@
                 <TextBlock FontSize="18"
                            FontWeight="SemiBold"
                            Text="MP3 Files" />
-                <TextBlock Margin="0,1,0,6"
-                           Foreground="#FF5E6875"
+                <TextBlock Margin="0,2,0,8"
+                           Foreground="{DynamicResource MahApps.Brushes.SystemControlForegroundBaseMediumHigh}"
                            Text="{Binding SummaryText, ElementName=Root}" />
                 <StackPanel Orientation="Horizontal">
                     <Button Width="108"
@@ -70,7 +71,7 @@
 
             <ListBox x:Name="FilesListBox"
                      Grid.Row="1"
-                     Margin="0,6,0,0"
+                     Margin="0,10,0,0"
                      Background="Transparent"
                      BorderThickness="0"
                      ItemsSource="{Binding FilesSource, ElementName=Root}"
@@ -81,7 +82,7 @@
                      SelectionMode="Single">
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem">
-                        <Setter Property="Margin" Value="0,0,0,4" />
+                        <Setter Property="Margin" Value="0,0,0,6" />
                         <Setter Property="Padding" Value="0" />
                         <Setter Property="BorderThickness" Value="0" />
                         <Setter Property="Background" Value="Transparent" />

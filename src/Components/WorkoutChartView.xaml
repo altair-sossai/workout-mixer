@@ -3,16 +3,17 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
     <Border Margin="0,0,0,4"
-            Padding="6"
-            Background="White"
-            CornerRadius="10">
+            Padding="12"
+            Background="{DynamicResource MahApps.Brushes.ThemeBackground}"
+            BorderBrush="{DynamicResource MahApps.Brushes.SystemControlForegroundBaseMediumLow}"
+            BorderThickness="1">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <DockPanel Margin="0,0,0,2">
+            <DockPanel Margin="0,0,0,10">
                 <StackPanel DockPanel.Dock="Right"
                             Orientation="Horizontal">
                     <Button Width="28"
@@ -56,7 +57,7 @@
                            FontWeight="SemiBold"
                            Text="Workout chart" />
                 <TextBlock Margin="10,3,0,0"
-                           Foreground="#FF5E6875"
+                           Foreground="{DynamicResource MahApps.Brushes.SystemControlForegroundBaseMediumHigh}"
                            Text="Segments and music list redraw this view automatically." />
             </DockPanel>
 
@@ -66,7 +67,7 @@
                           HorizontalScrollBarVisibility="Auto"
                           CanContentScroll="True">
                 <Canvas x:Name="ChartCanvas"
-                        Background="White"
+                        Background="{DynamicResource MahApps.Brushes.ThemeBackground}"
                         MouseLeftButtonDown="ChartCanvas_MouseLeftButtonDown"
                         Width="1200"
                         ToolTipService.BetweenShowDelay="0"

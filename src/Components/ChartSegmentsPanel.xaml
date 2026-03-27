@@ -9,21 +9,22 @@
              x:Name="Root"
              mc:Ignorable="d">
     <Border Margin="4,0,0,0"
-            Padding="6"
-            Background="White"
-            CornerRadius="10">
+            Padding="12"
+            Background="{DynamicResource MahApps.Brushes.ThemeBackground}"
+            BorderBrush="{DynamicResource MahApps.Brushes.SystemControlForegroundBaseMediumLow}"
+            BorderThickness="1">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <DockPanel Margin="0,0,0,4">
+            <DockPanel Margin="0,0,0,10">
                 <StackPanel DockPanel.Dock="Left">
                     <TextBlock FontSize="17"
                                FontWeight="SemiBold"
                                Text="Chart segments" />
-                    <TextBlock Foreground="#FF5E6875"
+                    <TextBlock Foreground="{DynamicResource MahApps.Brushes.SystemControlForegroundBaseMediumHigh}"
                                Text="Edit zone, minutes, seconds and RPM, then reorder as needed." />
                 </StackPanel>
 
@@ -68,9 +69,8 @@
                                             Height="12"
                                             Margin="0,0,6,0"
                                             Background="{Binding Zone.Brush}"
-                                            BorderBrush="#33000000"
-                                            BorderThickness="1"
-                                            CornerRadius="2" />
+                                            BorderBrush="{DynamicResource MahApps.Brushes.SystemControlForegroundBaseMediumLow}"
+                                            BorderThickness="1" />
                                     <TextBlock VerticalAlignment="Center"
                                                Text="{Binding Zone.Name}" />
                                 </StackPanel>

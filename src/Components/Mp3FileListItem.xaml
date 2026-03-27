@@ -3,11 +3,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              x:Name="Root">
-    <Border Padding="3"
-            Background="#FFF8FAFD"
+    <Border Padding="6"
+            Background="{DynamicResource MahApps.Brushes.SystemControlBackgroundAltHigh}"
             BorderBrush="{Binding File.AccentBrush, ElementName=Root}"
             BorderThickness="1"
-            CornerRadius="7">
+            SnapsToDevicePixels="True">
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="4" />
@@ -22,15 +22,13 @@
             <Border Grid.RowSpan="1"
                     Width="4"
                     Margin="0"
-                    Background="{Binding File.AccentBrush, ElementName=Root}"
-                    CornerRadius="5" />
+                    Background="{Binding File.AccentBrush, ElementName=Root}" />
 
             <Border Grid.Column="1"
                     Width="24"
                     Height="24"
-                    Margin="6,0,6,0"
-                    Background="{Binding File.AccentBrush, ElementName=Root}"
-                    CornerRadius="8">
+                    Margin="8,0,8,0"
+                    Background="{Binding File.AccentBrush, ElementName=Root}">
                 <iconPacks:PackIconModern Width="12"
                                           Height="12"
                                           HorizontalAlignment="Center"
@@ -45,7 +43,6 @@
                        LastChildFill="True">
                 <Border Padding="4,1"
                         Background="{Binding File.AccentBrush, ElementName=Root}"
-                        CornerRadius="6"
                         DockPanel.Dock="Left">
                     <TextBlock FontSize="9"
                                FontWeight="Bold"
@@ -61,12 +58,12 @@
                            ToolTip="{Binding File.Path, ElementName=Root}" />
                 <TextBlock VerticalAlignment="Center"
                            FontSize="10"
-                           Foreground="#FF556273"
+                           Foreground="{DynamicResource MahApps.Brushes.SystemControlForegroundBaseMediumHigh}"
                            Text="{Binding File.DurationFormatted, ElementName=Root}" />
                 <TextBlock Margin="8,0,0,0"
                            VerticalAlignment="Center"
                            FontSize="10"
-                           Foreground="#FF556273"
+                           Foreground="{DynamicResource MahApps.Brushes.SystemControlForegroundBaseMediumHigh}"
                            Text="{Binding File.SizeFormatted, ElementName=Root}" />
             </DockPanel>
 
@@ -76,7 +73,7 @@
                        VerticalAlignment="Center"
                        FontSize="10"
                        FontWeight="SemiBold"
-                       Foreground="#FF314152"
+                       Foreground="{DynamicResource MahApps.Brushes.SystemControlForegroundBaseHigh}"
                        Text="00:00 /" />
 
             <Slider x:Name="SeekSlider"
@@ -134,7 +131,7 @@
                         Height="18"
                         Margin="0,0,6,0"
                         VerticalAlignment="Center"
-                        Background="#22000000" />
+                        Background="{DynamicResource MahApps.Brushes.SystemControlForegroundBaseMediumLow}" />
                 <Button Width="20"
                         Height="18"
                         Margin="0,0,2,0"

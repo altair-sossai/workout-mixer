@@ -6,7 +6,8 @@
                  Title="Workout Mixer"
                  WindowStartupLocation="CenterScreen"
                  WindowState="Maximized">
-    <Grid Background="#FFF3F5F7" Margin="4">
+    <Grid Margin="8"
+          Background="{DynamicResource MahApps.Brushes.SystemControlPageBackgroundBaseLow}">
         <Grid.RowDefinitions>
             <RowDefinition Height="260" />
             <RowDefinition Height="*" />
@@ -16,7 +17,8 @@
                                      ChartDataPoints="{Binding ChartData}"
                                      Files="{Binding Files}" />
 
-        <Grid Grid.Row="1" Margin="0">
+        <Grid Grid.Row="1"
+              Margin="0,8,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="2*" />
                 <ColumnDefinition Width="*" />
