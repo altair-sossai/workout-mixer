@@ -29,10 +29,19 @@
                             Margin="0,0,3,0"
                             Click="ResetChartZoom_Click"
                             ToolTip="Reset zoom">
-                        <TextBlock x:Name="ChartZoomTextBlock"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   Text="1x" />
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center">
+                            <iconPacks:PackIconModern Width="11"
+                                                      Height="11"
+                                                      Margin="0,0,4,0"
+                                                      VerticalAlignment="Center"
+                                                      Kind="Refresh" />
+                            <TextBlock x:Name="ChartZoomTextBlock"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Text="1x" />
+                        </StackPanel>
                     </Button>
                     <Button Width="28"
                             Height="22"

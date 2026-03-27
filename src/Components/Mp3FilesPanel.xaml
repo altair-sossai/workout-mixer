@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:behaviors="clr-namespace:WorkoutMixer.Behaviors"
              xmlns:components="clr-namespace:WorkoutMixer.Components"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              x:Name="Root">
     <Border Margin="0,0,4,0"
             Padding="8"
@@ -26,17 +27,44 @@
                             Height="26"
                             Margin="0,0,4,0"
                             HorizontalAlignment="Left"
-                            Command="{Binding AddFilesCommand, ElementName=Root}"
-                            Content="Add files" />
+                            Command="{Binding AddFilesCommand, ElementName=Root}">
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconModern Width="11"
+                                                      Height="11"
+                                                      Margin="0,0,5,0"
+                                                      VerticalAlignment="Center"
+                                                      Kind="FolderOpen" />
+                            <TextBlock VerticalAlignment="Center"
+                                       Text="Add files" />
+                        </StackPanel>
+                    </Button>
                     <Button Width="108"
                             Height="26"
                             Margin="0,0,4,0"
-                            Command="{Binding SaveFinalMixCommand, ElementName=Root}"
-                            Content="Save MP3" />
+                            Command="{Binding SaveFinalMixCommand, ElementName=Root}">
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconModern Width="11"
+                                                      Height="11"
+                                                      Margin="0,0,5,0"
+                                                      VerticalAlignment="Center"
+                                                      Kind="Save" />
+                            <TextBlock VerticalAlignment="Center"
+                                       Text="Save MP3" />
+                        </StackPanel>
+                    </Button>
                     <Button Width="118"
                             Height="26"
-                            Command="{Binding SaveIntensityReportCommand, ElementName=Root}"
-                            Content="Save intensities" />
+                            Command="{Binding SaveIntensityReportCommand, ElementName=Root}">
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconModern Width="11"
+                                                      Height="11"
+                                                      Margin="0,0,5,0"
+                                                      VerticalAlignment="Center"
+                                                      Kind="GraphBar" />
+                            <TextBlock VerticalAlignment="Center"
+                                       Text="Save intensities" />
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </StackPanel>
 

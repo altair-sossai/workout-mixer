@@ -98,23 +98,31 @@
                         Orientation="Horizontal"
                         VerticalAlignment="Center">
                 <Button x:Name="PlayButton"
-                        Width="24"
-                        Height="22"
+                        Width="26"
+                        Height="24"
                         Click="PlayButton_Click"
+                        Background="{Binding File.AccentBrush, ElementName=Root}"
+                        BorderBrush="{Binding File.AccentBrush, ElementName=Root}"
+                        Foreground="White"
                         ToolTip="Play">
-                    <iconPacks:PackIconModern Width="12"
-                                              Height="12"
+                    <iconPacks:PackIconModern Width="13"
+                                              Height="13"
+                                              Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                                               Kind="ControlPlay" />
                 </Button>
 
                 <Button x:Name="PauseButton"
-                        Width="24"
-                        Height="22"
+                        Width="26"
+                        Height="24"
                         Margin="2,0,0,0"
                         Click="PauseButton_Click"
+                        Background="{Binding File.AccentBrush, ElementName=Root}"
+                        BorderBrush="{Binding File.AccentBrush, ElementName=Root}"
+                        Foreground="White"
                         ToolTip="Pause">
-                    <iconPacks:PackIconModern Width="12"
-                                              Height="12"
+                    <iconPacks:PackIconModern Width="13"
+                                              Height="13"
+                                              Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                                               Kind="ControlPause" />
                 </Button>
             </StackPanel>
@@ -122,33 +130,38 @@
             <StackPanel Grid.Column="6"
                         Orientation="Horizontal"
                         VerticalAlignment="Center">
-                <Button Width="24"
-                        Height="22"
+                <Border Width="1"
+                        Height="18"
+                        Margin="0,0,6,0"
+                        VerticalAlignment="Center"
+                        Background="#22000000" />
+                <Button Width="20"
+                        Height="18"
                         Margin="0,0,2,0"
                         Command="{Binding MoveUpCommand, ElementName=Root}"
                         CommandParameter="{Binding}"
                         ToolTip="Move up">
-                    <iconPacks:PackIconModern Width="11"
-                                              Height="11"
+                    <iconPacks:PackIconModern Width="9"
+                                              Height="9"
                                               Kind="ArrowUp" />
                 </Button>
-                <Button Width="24"
-                        Height="22"
+                <Button Width="20"
+                        Height="18"
                         Margin="0,0,2,0"
                         Command="{Binding MoveDownCommand, ElementName=Root}"
                         CommandParameter="{Binding}"
                         ToolTip="Move down">
-                    <iconPacks:PackIconModern Width="11"
-                                              Height="11"
+                    <iconPacks:PackIconModern Width="9"
+                                              Height="9"
                                               Kind="ArrowDown" />
                 </Button>
-                <Button Width="24"
-                        Height="22"
+                <Button Width="20"
+                        Height="18"
                         Command="{Binding RemoveCommand, ElementName=Root}"
                         CommandParameter="{Binding}"
                         ToolTip="Remove file">
-                    <iconPacks:PackIconModern Width="11"
-                                              Height="11"
+                    <iconPacks:PackIconModern Width="9"
+                                              Height="9"
                                               Kind="Delete" />
                 </Button>
             </StackPanel>
