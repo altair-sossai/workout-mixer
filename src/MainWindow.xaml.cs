@@ -41,14 +41,14 @@ public partial class MainWindow
 
         MoveUpCommand = new RelayCommand<Mp3File>(MoveUpFile);
         MoveDownCommand = new RelayCommand<Mp3File>(MoveDownFile);
-        RemoveCommand = new RelayCommand<Mp3File>(RemoveFile);
+        RemoveCommand = new AsyncRelayCommand<Mp3File>(RemoveFileAsync);
         AddFilesCommand = new AsyncRelayCommand<object>(_ => AddFilesAsync());
         SaveFinalMixCommand = new AsyncRelayCommand<object>(_ => SaveFinalMixAsync());
         SaveIntensityReportCommand = new AsyncRelayCommand<object>(_ => SaveIntensityReportAsync());
         AddChartDataPointCommand = new RelayCommand<object>(_ => AddChartDataPoint());
         MoveChartDataPointUpCommand = new RelayCommand<ChartDataPoint>(MoveChartDataPointUp);
         MoveChartDataPointDownCommand = new RelayCommand<ChartDataPoint>(MoveChartDataPointDown);
-        RemoveChartDataPointCommand = new RelayCommand<ChartDataPoint>(RemoveChartDataPoint);
+        RemoveChartDataPointCommand = new AsyncRelayCommand<ChartDataPoint>(RemoveChartDataPointAsync);
 
         DataContext = this;
 
@@ -251,9 +251,22 @@ public partial class MainWindow
         SelectFile(item);
     }
 
-    private void RemoveFile(Mp3File? item)
+    private async Task RemoveFileAsync(Mp3File? item)
     {
         if (item is null)
+            return;
+
+        var confirmation = await this.ShowMessageAsync(
+            "Remove file",
+            $"Are you sure you want to remove \"{item.FileName}\"?",
+            MessageDialogStyle.AffirmativeAndNegative,
+            new MetroDialogSettings
+            {
+                AffirmativeButtonText = "Remove",
+                NegativeButtonText = "Cancel"
+            });
+
+        if (confirmation != MessageDialogResult.Affirmative)
             return;
 
         var index = Files.IndexOf(item);
@@ -414,9 +427,22 @@ public partial class MainWindow
         SegmentsPanel.SelectChartDataPoint(item);
     }
 
-    private void RemoveChartDataPoint(ChartDataPoint? item)
+    private async Task RemoveChartDataPointAsync(ChartDataPoint? item)
     {
         if (item is null)
+            return;
+
+        var confirmation = await this.ShowMessageAsync(
+            "Remove segment",
+            $"Are you sure you want to remove the segment \"{item.Zone.Name}\" ({item.DurationSeconds:0}s, {item.Rpm} RPM)?",
+            MessageDialogStyle.AffirmativeAndNegative,
+            new MetroDialogSettings
+            {
+                AffirmativeButtonText = "Remove",
+                NegativeButtonText = "Cancel"
+            });
+
+        if (confirmation != MessageDialogResult.Affirmative)
             return;
 
         ChartData.Remove(item);
